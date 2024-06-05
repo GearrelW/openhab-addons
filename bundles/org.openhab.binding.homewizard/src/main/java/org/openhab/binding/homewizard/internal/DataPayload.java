@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2022 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -17,13 +17,13 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Class that provides storage for the json object obtained from the P1 meter API
+ * Class that provides storage for the json objects obtained from HomeWizard devices.
  *
  * @author Daniël van Os - Initial contribution
  *
  */
 @NonNullByDefault
-public class P1Payload {
+public class DataPayload {
     private int smrVersion = 0;
     private String meterModel = "";
     private String wifiSsid = "";
@@ -42,8 +42,14 @@ public class P1Payload {
     private double activePowerL1W;
     private double activePowerL2W;
     private double activePowerL3W;
+    private double activeVoltageV;
     private double totalGasM3;
     private long gasTimestamp = 0;
+
+    @SerializedName("total_liter_m3")
+    private double totalWaterM3;
+    @SerializedName("active_liter_lpm")
+    private double currentWaterLPM;
 
     /**
      * Getter for the smart meter version
@@ -262,6 +268,15 @@ public class P1Payload {
     }
 
     /**
+     * Getter for the current active voltage
+     *
+     * @return current active voltage
+     */
+    public double getActiveVoltage() {
+        return activeVoltageV;
+    }
+
+    /**
      * Getter for the total imported gas volume
      *
      * @return total imported gas volume
@@ -297,15 +312,50 @@ public class P1Payload {
         this.gasTimestamp = gasTimestamp;
     }
 
+    /**
+     * Getter for the total imported water volume
+     *
+     * @return total imported water volume
+     */
+    public double getTotalWaterM3() {
+        return totalWaterM3;
+    }
+
+    /**
+     * Setter for the total imported water volume
+     *
+     * @param totalWaterM3 total imported water volume
+     */
+    public void setTotalWaterM3(double totalWaterM3) {
+        this.totalWaterM3 = totalWaterM3;
+    }
+
+    /**
+     * Getter for the current water flow
+     *
+     * @return current water flow
+     */
+    public double getCurrentWaterLPM() {
+        return currentWaterLPM;
+    }
+
+    /**
+     * Setter for the current water flow
+     *
+     * @param currentWaterLPM current water flow
+     */
+    public void setCurrentWaterLPM(double currentWaterLPM) {
+        this.currentWaterLPM = currentWaterLPM;
+    }
+
     @Override
     public String toString() {
-        return String.format(
-                """
-                        P1 [version: %d model: %s ssid: %s signal: %d\
-                         imp1: %f imp2: %f exp1: %f exp2: %f active: %f active1: %f active2: %f active3: %f gas: %f timestamp: %.0f]\
-                        """,
-                smrVersion, meterModel, wifiSsid, wifiStrength, totalEnergyImportT1Kwh, totalEnergyImportT2Kwh,
-                totalEnergyExportT1Kwh, totalEnergyExportT2Kwh, activePowerW, activePowerL1W, activePowerL2W,
-                activePowerL3W, totalGasM3, gasTimestamp);
+        return String.format("Data [smrVersion: %d meterModel: %s wifiSsid: %s wifiStrength: %d"
+                + " totalEnergyImportT1Kwh: %f totalEnergyImportT2Kwh: %f totalEnergyExportT1Kwh: %f totalEnergyExportT2Kwh: %f"
+                + " activePowerW: %f activePowerL1W: %f activePowerL2W: %f activePowerL3W: %f activeVoltageV: %f totalGasM3: %f gasTimestamp: %.0f"
+                + " totalWaterM3: %f currentWaterLPM: %f]", smrVersion, meterModel, wifiSsid, wifiStrength,
+                totalEnergyImportT1Kwh, totalEnergyImportT2Kwh, totalEnergyExportT1Kwh, totalEnergyExportT2Kwh,
+                activePowerW, activePowerL1W, activePowerL2W, activePowerL3W, activeVoltageV, gasTimestamp,
+                totalWaterM3, currentWaterLPM);
     }
 }
