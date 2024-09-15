@@ -134,9 +134,9 @@
 	
 	<channel-type id="active_voltage_v">
         <item-type>Number:ElectricPotential</item-type>
-        <label>Current Net Voltage</label>
+        <label>Current Grid Voltage</label>
         <description>
-            This channel provides the current net voltage in V.
+            This channel provides the current grid voltage in V.
         </description>
     </channel-type>
 
