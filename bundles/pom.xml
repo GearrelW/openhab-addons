@@ -12,11 +12,7 @@
             
     
     <artifactId>org.openhab.addons.reactor</artifactId>
-            
-    
-    <version>4.2.0-SNAPSHOT</version>
-          
-  
+    <version>4.3.0-SNAPSHOT</version>
   </parent>
       
   
@@ -147,8 +143,7 @@
             
     
     <module>org.openhab.binding.amazonechocontrol</module>
-            
-    
+    <module>org.openhab.binding.amberelectric</module>
     <module>org.openhab.binding.ambientweather</module>
             
     
@@ -165,8 +160,7 @@
             
     
     <module>org.openhab.binding.anthem</module>
-            
-    
+    <module>org.openhab.binding.argoclima</module>
     <module>org.openhab.binding.astro</module>
             
     
@@ -225,8 +219,7 @@
             
     
     <module>org.openhab.binding.bluetooth.grundfosalpha</module>
-            
-    
+    <module>org.openhab.binding.bluetooth.hdpowerview</module>
     <module>org.openhab.binding.bluetooth.radoneye</module>
             
     
@@ -360,17 +353,11 @@
             
     
     <module>org.openhab.binding.ekey</module>
-            
-    
-    <module>org.openhab.binding.electroluxair</module>
-            
-    
     <module>org.openhab.binding.elerotransmitterstick</module>
             
     
     <module>org.openhab.binding.elroconnects</module>
-            
-    
+    <module>org.openhab.binding.emotiva</module>
     <module>org.openhab.binding.energenie</module>
             
     
@@ -411,14 +398,12 @@
             
     
     <module>org.openhab.binding.feican</module>
-            
-    
+    <module>org.openhab.binding.fenecon</module>
     <module>org.openhab.binding.fineoffsetweatherstation</module>
             
     
     <module>org.openhab.binding.flicbutton</module>
-            
-    
+    <module>org.openhab.binding.flume</module>
     <module>org.openhab.binding.fmiweather</module>
             
     
@@ -714,8 +699,7 @@
             
     
     <module>org.openhab.binding.meteostick</module>
-            
-    
+    <module>org.openhab.binding.mffan</module>
     <module>org.openhab.binding.miele</module>
             
     
@@ -909,14 +893,12 @@
             
     
     <module>org.openhab.binding.paradoxalarm</module>
-            
-    
+    <module>org.openhab.binding.pegelonline</module>
     <module>org.openhab.binding.pentair</module>
             
     
     <module>org.openhab.binding.phc</module>
-            
-    
+    <module>org.openhab.binding.pihole</module>
     <module>org.openhab.binding.pilight</module>
             
     
@@ -1056,8 +1038,7 @@
             
     
     <module>org.openhab.binding.silvercrestwifisocket</module>
-            
-    
+    <module>org.openhab.binding.siemenshvac</module>
     <module>org.openhab.binding.siemensrds</module>
             
     
@@ -1098,8 +1079,7 @@
             
     
     <module>org.openhab.binding.solarlog</module>
-            
-    
+    <module>org.openhab.binding.solarman</module>
     <module>org.openhab.binding.solarmax</module>
             
     
@@ -1140,8 +1120,7 @@
             
     
     <module>org.openhab.binding.squeezebox</module>
-            
-    
+    <module>org.openhab.binding.sunsynk</module>
     <module>org.openhab.binding.surepetcare</module>
             
     
@@ -1176,8 +1155,8 @@
             
     
     <module>org.openhab.binding.tesla</module>
-            
-    
+    <module>org.openhab.binding.teslapowerwall</module>
+    <module>org.openhab.binding.teslascope</module>
     <module>org.openhab.binding.tibber</module>
             
     
@@ -1242,8 +1221,7 @@
             
     
     <module>org.openhab.binding.vigicrues</module>
-            
-    
+    <module>org.openhab.binding.visualcrossing</module>
     <module>org.openhab.binding.vitotronic</module>
             
     
@@ -1383,10 +1361,7 @@
             
     
     <module>org.openhab.voice.watsonstt</module>
-            
-      
-    
-      
+    <module>org.openhab.voice.whisperstt</module>
   </modules>
       
   

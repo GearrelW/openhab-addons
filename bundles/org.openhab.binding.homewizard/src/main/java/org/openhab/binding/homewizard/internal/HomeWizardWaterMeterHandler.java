@@ -1,5 +1,9 @@
 /**
+<<<<<<< HEAD
  * Copyright (c) 2010-2022 Contributors to the openHAB project
+=======
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
+>>>>>>> branch 'dev' of https://github.com/GearrelW/openhab-addons.git
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,6 +17,7 @@
 package org.openhab.binding.homewizard.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.unit.SIUnits;
 import org.openhab.core.library.unit.Units;
@@ -50,7 +55,7 @@ public class HomeWizardWaterMeterHandler extends HomeWizardDeviceHandler {
      * @param payload The data parsed from the Json file
      */
     @Override
-    protected void handleDataPayload(DataPayload payload) {
+    protected void handleDataPayload(@Nullable DataPayload payload) {
         updateState(HomeWizardBindingConstants.CHANNEL_CURRENT_WATER,
                 new QuantityType<>(payload.getCurrentWaterLPM(), Units.LITRE_PER_MINUTE));
         updateState(HomeWizardBindingConstants.CHANNEL_TOTAL_WATER,

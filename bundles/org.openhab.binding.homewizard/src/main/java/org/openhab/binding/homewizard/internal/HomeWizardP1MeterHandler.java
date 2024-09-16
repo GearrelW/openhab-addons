@@ -1,5 +1,9 @@
 /**
+<<<<<<< HEAD
  * Copyright (c) 2010-2022 Contributors to the openHAB project
+=======
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
+>>>>>>> branch 'dev' of https://github.com/GearrelW/openhab-addons.git
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -17,6 +21,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.unit.SIUnits;
@@ -58,7 +63,7 @@ public class HomeWizardP1MeterHandler extends HomeWizardDeviceHandler {
      * @param payload The data parsed from the Json file
      */
     @Override
-    protected void handleDataPayload(DataPayload payload) {
+    protected void handleDataPayload(@Nullable DataPayload payload) {
         if (!meterModel.equals(payload.getMeterModel())) {
             meterModel = payload.getMeterModel();
             updateProperty(HomeWizardBindingConstants.PROPERTY_METER_MODEL, meterModel);

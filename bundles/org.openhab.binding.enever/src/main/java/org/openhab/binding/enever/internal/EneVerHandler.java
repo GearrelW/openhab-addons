@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.enever.internal;
 
-import static org.openhab.binding.enever.internal.EneVerBindingConstants.*;
+import static org.openhab.binding.enever.internal.EneVerBindingConstants.CHANNEL_1;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -22,8 +22,6 @@ import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The {@link EneVerHandler} is responsible for handling commands, which are
@@ -34,7 +32,7 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 public class EneVerHandler extends BaseThingHandler {
 
-    private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
+    // private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
 
     private @Nullable EneVerConfiguration config;
 
@@ -101,4 +99,5 @@ public class EneVerHandler extends BaseThingHandler {
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
     }
+
 }

@@ -13,6 +13,7 @@
 package org.openhab.binding.homewizard.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
@@ -117,7 +118,7 @@ public class HomeWizardEnergySocketHandler extends HomeWizardStatefulDeviceHandl
      * @param payload The data parsed from the Json file
      */
     @Override
-    protected void handleDataPayload(DataPayload payload) {
+    protected void handleDataPayload(@Nullable DataPayload payload) {
         updateState(HomeWizardBindingConstants.CHANNEL_ENERGY_IMPORT_T1,
                 new QuantityType<>(payload.getTotalEnergyImportT1Kwh(), Units.KILOWATT_HOUR));
         updateState(HomeWizardBindingConstants.CHANNEL_ENERGY_EXPORT_T1,
@@ -134,5 +135,6 @@ public class HomeWizardEnergySocketHandler extends HomeWizardStatefulDeviceHandl
         updateState(HomeWizardBindingConstants.CHANNEL_POWER_LOCK, OnOffType.from(payload.getSwitchLock()));
         updateState(HomeWizardBindingConstants.CHANNEL_RING_BRIGHTNESS,
                 new PercentType(brightnessToPercentage(payload.getBrightness())));
+
     }
 }
