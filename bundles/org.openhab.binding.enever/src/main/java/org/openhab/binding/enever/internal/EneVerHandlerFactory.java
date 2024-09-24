@@ -12,7 +12,7 @@
  */
 package org.openhab.binding.enever.internal;
 
-import static org.openhab.binding.enever.internal.EneVerBindingConstants.*;
+import static org.openhab.binding.enever.internal.EneVerBindingConstants.THING_TYPE_ENEVER;
 
 import java.util.Set;
 
@@ -32,10 +32,10 @@ import org.osgi.service.component.annotations.Component;
  * @author Gearrel Welvaart - Initial contribution
  */
 @NonNullByDefault
-@Component(configurationPid = "binding.enever", service = ThingHandlerFactory.class)
+@Component(configurationPid = "binding.intergas_gateway", service = ThingHandlerFactory.class)
 public class EneVerHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_SAMPLE);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_ENEVER);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -46,7 +46,7 @@ public class EneVerHandlerFactory extends BaseThingHandlerFactory {
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (THING_TYPE_SAMPLE.equals(thingTypeUID)) {
+        if (THING_TYPE_ENEVER.equals(thingTypeUID)) {
             return new EneVerHandler(thing);
         }
 

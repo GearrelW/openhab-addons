@@ -25,7 +25,9 @@ public class EneVerConfiguration {
     /**
      * Sample configuration parameters. Replace with your own.
      */
-    public String hostname = "";
-    public String password = "";
-    public int refreshInterval = 600;
+    public String token = "";
+
+    public int numberOfHours = 0;
+
+    public boolean debug = false;
 }

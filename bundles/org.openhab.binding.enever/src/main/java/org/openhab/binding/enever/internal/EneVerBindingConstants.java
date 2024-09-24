@@ -27,8 +27,13 @@ public class EneVerBindingConstants {
     private static final String BINDING_ID = "enever";
 
     // List of all Thing Type UIDs
-    public static final ThingTypeUID THING_TYPE_SAMPLE = new ThingTypeUID(BINDING_ID, "sample");
+    public static final ThingTypeUID THING_TYPE_ENEVER = new ThingTypeUID(BINDING_ID, "enever");
 
     // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
+    public static final String CHANNEL_ELECTRICITY_HOURLY_PRICE = "electricity-price";
+    public static final String CHANNEL_AVG_ELECTRICITY_PRICE = "average-electricity-price";
+    public static final String CHANNEL_GAS_DAILY_PRICE = "gas-price";
+    public static final String CHANNEL_CHEAP_HOUR = "cheap-hour";
+    public static final String CHANNEL_EXPENSIVE_HOUR = "expensive-hour";
+
 }

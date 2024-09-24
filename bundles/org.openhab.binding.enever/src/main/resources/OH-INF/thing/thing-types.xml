@@ -5,44 +5,61 @@
 	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
 	<!-- Sample Thing Type -->
-	<thing-type id="sample">
-		<!-- Comment this in for Things which need a Bridge to function.
-			<supported-bridge-type-refs>
-			<bridge-type-ref id="EneVerBridge" />
-			</supported-bridge-type-refs>
-		-->
+	<thing-type id="enever">
 
 		<label>EneVer Binding Thing</label>
-		<description>Sample thing for EneVer Binding</description>
+		<description>EneVer Binding</description>
 
 		<channels>
-			<channel id="channel1" typeId="sample-channel"/>
+			<channel id="electricity-price" typeId="channel-price">
+			    <label>Hourly Electricity Price</label>
+                <description>This channel provides the hourly electricity price</description>
+			</channel>
+			<channel id="average-electricity-price" typeId="channel-price">
+			    <label>Average Electricity Price</label>
+                <description>This channel provides the average electricity price</description>
+			</channel>
+			<channel id="gas-price" typeId="channel-price">
+			    <label>Daily Gas Price</label>
+                <description>This channel provides the daily gas price</description>
+			</channel>
+			<channel id="cheap-hour" typeId="channel-switch">
+			    <label>Cheap Electricity Hour</label>
+                <description>This channel is set to ON when the electricity is cheap</description>
+			</channel>
+			<channel id="expensive-hour" typeId="channel-switch">
+			    <label>Expensive Electricity Hour</label>
+                <description>This channel is set to ON when the electricity is expensive</description>
+			</channel>		
 		</channels>
 
 		<config-description>
-			<parameter name="hostname" type="text" required="true">
-				<context>network-address</context>
-				<label>Hostname</label>
-				<description>Hostname or IP address of the device</description>
-			</parameter>
-			<parameter name="password" type="text" required="true">
-				<context>password</context>
-				<label>Password</label>
-				<description>Password to access the device</description>
-			</parameter>
-			<parameter name="refreshInterval" type="integer" unit="s" min="1">
-				<label>Refresh Interval</label>
-				<description>Interval the device is polled in sec.</description>
-				<default>600</default>
-				<advanced>true</advanced>
-			</parameter>
+			<parameter name="token" type="text" required="true">
+                <label>Token</label>
+                <description>Token</description>
+            </parameter>
+            <parameter name="numberOfHours" type="text" required="true">
+                <label>Number of hours</label>
+                <description>Number of cheap/expensive hours</description>
+            </parameter>
+            <parameter name="debug" type="boolean" required="false">
+                <label>Debug mode</label>
+                <description>Debug mode</description>
+            </parameter>
 		</config-description>
 	</thing-type>
 
 	<!-- Sample Channel Type -->
-	<channel-type id="sample-channel">
-		<item-type>Number:Temperature</item-type>
-		<label>Example Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-		<description>Sample channel for EneVer Binding</description>
+	<channel-type id="channel-price">
+		<item-type>Number</item-type>
+		<label>Price</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Price</description>
+		<state pattern="%.2f" readOnly="true"></state>
 	</channel-type>
+	<channel-type id="channel-switch">
+        <item-type>Switch</item-type>
+        <label>Hour</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Cheap of expensive hour</description>
+        <state readOnly="true"></state>
+    </channel-type>
 </thing:thing-descriptions>

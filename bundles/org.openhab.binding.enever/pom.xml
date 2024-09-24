@@ -13,4 +13,5 @@
   <artifactId>org.openhab.binding.enever</artifactId>
 
   <name>openHAB Add-ons :: Bundles :: EneVer Binding</name>
+
 </project>

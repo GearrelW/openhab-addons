@@ -1,4 +1,4 @@
-# EneVer Binding
+# Intergas_Gateway Binding
 
 _Give some details about what this binding is meant for - a protocol, system, specific device._
 
@@ -28,9 +28,9 @@ _In this section, you should link to this file and provide some information abou
 _The file could e.g. look like:_
 
 ```
-# Configuration for the EneVer Binding
+# Configuration for the Intergas_Gateway Binding
 #
-# Default secret key for the pairing of the EneVer Thing.
+# Default secret key for the pairing of the Intergas_Gateway Thing.
 # It has to be between 10-40 (alphanumeric) characters.
 # This may be changed by the user for security reasons.
 secret=openHABSecret
