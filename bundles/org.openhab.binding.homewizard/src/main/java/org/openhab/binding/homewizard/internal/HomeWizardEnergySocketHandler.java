@@ -135,6 +135,5 @@ public class HomeWizardEnergySocketHandler extends HomeWizardStatefulDeviceHandl
         updateState(HomeWizardBindingConstants.CHANNEL_POWER_LOCK, OnOffType.from(payload.getSwitchLock()));
         updateState(HomeWizardBindingConstants.CHANNEL_RING_BRIGHTNESS,
                 new PercentType(brightnessToPercentage(payload.getBrightness())));
-
     }
 }

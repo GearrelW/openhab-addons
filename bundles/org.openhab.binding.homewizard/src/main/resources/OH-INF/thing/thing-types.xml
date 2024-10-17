@@ -131,14 +131,14 @@
 			used for export during the day.
 		</description>
 	</channel-type>
-	
+
 	<channel-type id="active_voltage_v">
-        <item-type>Number:ElectricPotential</item-type>
-        <label>Current Grid Voltage</label>
-        <description>
-            This channel provides the current grid voltage in V.
-        </description>
-    </channel-type>
+		<item-type>Number:ElectricPotential</item-type>
+		<label>Current Grid Voltage</label>
+		<description>
+			This channel provides the current grid voltage in V.
+		</description>
+	</channel-type>
 
 	<channel-type id="active_power">
 		<item-type>Number:Power</item-type>
@@ -147,6 +147,7 @@
 			This channel provides the current net total power in W. It will be below 0 if power is currently being
 			exported.
 		</description>
+		<state readOnly="true" pattern="%.1f %unit%"></state>
 	</channel-type>
 
 	<channel-type id="active_power_l1">

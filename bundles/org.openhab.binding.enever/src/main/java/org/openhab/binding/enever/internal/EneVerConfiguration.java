@@ -29,5 +29,7 @@ public class EneVerConfiguration {
 
     public int numberOfHours = 0;
 
+    public int priceTreshold = 0;
+
     public boolean debug = false;
 }

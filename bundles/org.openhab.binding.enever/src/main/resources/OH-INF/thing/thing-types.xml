@@ -23,14 +23,10 @@
 			    <label>Daily Gas Price</label>
                 <description>This channel provides the daily gas price</description>
 			</channel>
-			<channel id="cheap-hour" typeId="channel-switch">
-			    <label>Cheap Electricity Hour</label>
-                <description>This channel is set to ON when the electricity is cheap</description>
-			</channel>
-			<channel id="expensive-hour" typeId="channel-switch">
-			    <label>Expensive Electricity Hour</label>
-                <description>This channel is set to ON when the electricity is expensive</description>
-			</channel>		
+			<channel id="indication-hour" typeId="channel-indication">
+			    <label>Cheap/Expensive hours</label>
+                <description>Indicates cheap, expensive and normal hours. 0 - Normal, 1 - Cheap, -1 - Expensive</description>
+			</channel>	
 		</channels>
 
 		<config-description>
@@ -38,9 +34,13 @@
                 <label>Token</label>
                 <description>Token</description>
             </parameter>
-            <parameter name="numberOfHours" type="text" required="true">
+            <parameter name="numberOfHours" type="integer" required="true">
                 <label>Number of hours</label>
                 <description>Number of cheap/expensive hours</description>
+            </parameter>
+            <parameter name="priceTreshold" type="integer" required="false">
+                <label>Treshold (%) for cheap/expensive hours</label>
+                <description>Treshold in percentage of the average hour</description>
             </parameter>
             <parameter name="debug" type="boolean" required="false">
                 <label>Debug mode</label>
@@ -56,9 +56,9 @@
 		<description>Price</description>
 		<state pattern="%.2f" readOnly="true"></state>
 	</channel-type>
-	<channel-type id="channel-switch">
-        <item-type>Switch</item-type>
-        <label>Hour</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+	<channel-type id="channel-indication">
+        <item-type>Number</item-type>
+        <label>Indication</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
         <description>Cheap of expensive hour</description>
         <state readOnly="true"></state>
     </channel-type>

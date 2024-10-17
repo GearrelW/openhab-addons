@@ -33,7 +33,6 @@ public class EneVerBindingConstants {
     public static final String CHANNEL_ELECTRICITY_HOURLY_PRICE = "electricity-price";
     public static final String CHANNEL_AVG_ELECTRICITY_PRICE = "average-electricity-price";
     public static final String CHANNEL_GAS_DAILY_PRICE = "gas-price";
-    public static final String CHANNEL_CHEAP_HOUR = "cheap-hour";
-    public static final String CHANNEL_EXPENSIVE_HOUR = "expensive-hour";
+    public static final String CHANNEL_HOUR_INDICATION = "indication-hour";
 
 }

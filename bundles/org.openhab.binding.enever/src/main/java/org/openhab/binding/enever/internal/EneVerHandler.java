@@ -27,7 +27,6 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.library.types.DecimalType;
-import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -64,6 +63,8 @@ public class EneVerHandler extends BaseThingHandler {
     private String testDataG = "{\"status\":\"true\",\"data\":[{\"datum\":\"2024-09-24 06:00:00\",\"prijsEGSI\":\"0.350059\",\"prijsEOD\":\"0.354690\",\"prijsAA\":\"1.201611\",\"prijsAIP\":\"1.236701\",\"prijsANWB\":\"1.188121\",\"prijsBE\":\"1.204021\",\"prijsEE\":\"1.254199\",\"prijsEN\":\"1.208001\",\"prijsEVO\":\"1.188121\",\"prijsEZ\":\"1.189011\",\"prijsFR\":\"1.214475\",\"prijsGSL\":\"1.188121\",\"prijsMDE\":\"1.188121\",\"prijsNE\":\"1.188011\",\"prijsVDB\":\"1.235631\",\"prijsVON\":\"1.208911\",\"prijsWE\":\"1.213711\",\"prijsZG\":\"1.188121\",\"prijsZP\":\"1.209011\"}],\"code\":\"5\"}";
 
     private String token = "";
+
+    private double treshold = 0;
 
     private Hashtable<Integer, Double> ePrices = new Hashtable<>();
     private double averagePrice = 0;
@@ -105,19 +106,18 @@ public class EneVerHandler extends BaseThingHandler {
             updateHourlyChannels(LocalDateTime.now().getHour());
 
             // schedule get prices next day
-            long nextDailyScheduleInMins = Duration
-                    .between(LocalDateTime.now(), LocalDateTime.now().withHour(23).withMinute(55).withSecond(0))
-                    .toMinutes();
+            long nextDailyScheduleInNanos = Duration.between(LocalDateTime.now(),
+                    LocalDateTime.now().withHour(23).withMinute(55).withSecond(0).withNano(0)).toNanos();
 
-            dailyJob = scheduler.scheduleWithFixedDelay(this::scheduleDailyPrices, nextDailyScheduleInMins,
-                    TimeUnit.DAYS.toMinutes(1), TimeUnit.MINUTES);
+            dailyJob = scheduler.scheduleWithFixedDelay(this::scheduleDailyPrices, nextDailyScheduleInNanos,
+                    TimeUnit.DAYS.toNanos(1), TimeUnit.NANOSECONDS);
 
             // schedule update channels hourly
-            long nextHourlyScheduleInMins = Duration
-                    .between(LocalDateTime.now(), LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0))
-                    .toMinutes();
-            hourlyJob = scheduler.scheduleWithFixedDelay(this::scheduleHourlyPrices, nextHourlyScheduleInMins,
-                    TimeUnit.HOURS.toMinutes(1), TimeUnit.MINUTES);
+            var now = LocalDateTime.now();
+            long nextHourlyScheduleInNanos = Duration
+                    .between(now, now.plusHours(1).withMinute(0).withSecond(0).withNano(0)).toNanos();
+            hourlyJob = scheduler.scheduleWithFixedDelay(this::scheduleHourlyPrices, nextHourlyScheduleInNanos,
+                    TimeUnit.HOURS.toNanos(1), TimeUnit.NANOSECONDS);
 
         }
 
@@ -138,6 +138,7 @@ public class EneVerHandler extends BaseThingHandler {
             token = config.token;
             numberOfHours = config.numberOfHours;
             debug = config.debug;
+            treshold = (double) config.priceTreshold / 100;
             return true;
         }
     }
@@ -239,10 +240,15 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     private void updateHourlyChannels(int hour) {
+        logger.debug("updating channels for " + hour);
         updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(ePrices.get(hour)));
-
-        updateState(EneVerBindingConstants.CHANNEL_CHEAP_HOUR, OnOffType.from(cheapHours.contains(hour)));
-        updateState(EneVerBindingConstants.CHANNEL_EXPENSIVE_HOUR, OnOffType.from(expensiveHours.contains(hour)));
+        if (cheapHours.contains(hour)) {
+            updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(1));
+        } else if (expensiveHours.contains(hour)) {
+            updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(-1));
+        } else {
+            updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(0));
+        }
     }
 
     protected void scheduleDailyPrices() {
@@ -256,24 +262,31 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     private void determineCheapAndExpensiveHours() {
+        cheapHours.clear();
+        expensiveHours.clear();
+
         var prices = new ArrayList<Double>();
         for (Entry<Integer, Double> entry : ePrices.entrySet()) {
             prices.add(entry.getValue());
         }
-
+        logger.debug("Using treshold " + treshold * 100 + "%");
         Collections.sort(prices);
 
         for (int i = 0; i < numberOfHours; i++) {
             for (Entry<Integer, Double> entry : ePrices.entrySet()) {
                 if (entry.getValue().equals(prices.get(i)) && !cheapHours.contains(entry.getKey())) {
-                    cheapHours.add(entry.getKey());
+                    if (prices.get(i) <= averagePrice * (1 - treshold)) {
+                        cheapHours.add(entry.getKey());
+                    }
                     break;
                 }
             }
             for (Entry<Integer, Double> entry : ePrices.entrySet()) {
                 if (entry.getValue().equals(prices.get(prices.size() - 1 - i))
                         && !expensiveHours.contains(entry.getKey())) {
-                    expensiveHours.add(entry.getKey());
+                    if (prices.get(i) <= averagePrice * (1 + treshold)) {
+                        expensiveHours.add(entry.getKey());
+                    }
                     break;
                 }
             }
