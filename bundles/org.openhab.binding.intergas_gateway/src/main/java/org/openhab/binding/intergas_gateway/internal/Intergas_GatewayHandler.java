@@ -31,6 +31,8 @@ import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -45,7 +47,7 @@ import com.google.gson.GsonBuilder;
 @NonNullByDefault
 public class Intergas_GatewayHandler extends BaseThingHandler {
 
-    // private final Logger logger = LoggerFactory.getLogger(Intergas_GatewayHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(Intergas_GatewayHandler.class);
 
     protected final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
@@ -69,7 +71,8 @@ public class Intergas_GatewayHandler extends BaseThingHandler {
                 return;
             }
 
-            Double setPoint = Double.valueOf(command.toFullString().split(" ")[0]) - 5 * 10;
+            Double setPoint = (Double.valueOf(command.toFullString().split(" ")[0]) - 5) * 10;
+            // logger.debug("setPoint = " + setPoint);
             String dataResult = null;
             try {
                 dataResult = HttpUtil.executeUrl("GET", apiURL + "&setpoint=" + setPoint + "&thermostat=0", 30000);

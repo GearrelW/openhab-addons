@@ -42,6 +42,10 @@
                 <label>Treshold (%) for cheap/expensive hours</label>
                 <description>Treshold in percentage of the average hour</description>
             </parameter>
+            <parameter name="excludeNightlyHours" type="boolean" required="false">
+                <label>Exclude nightly hours</label>
+                <description>Exclude nightly hour between 0:00 and 5:00</description>
+            </parameter>
             <parameter name="debug" type="boolean" required="false">
                 <label>Debug mode</label>
                 <description>Debug mode</description>

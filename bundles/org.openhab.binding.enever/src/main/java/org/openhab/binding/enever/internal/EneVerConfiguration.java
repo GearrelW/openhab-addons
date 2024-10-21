@@ -31,5 +31,7 @@ public class EneVerConfiguration {
 
     public int priceTreshold = 0;
 
+    public boolean excludeNightlyHours = false;
+
     public boolean debug = false;
 }
