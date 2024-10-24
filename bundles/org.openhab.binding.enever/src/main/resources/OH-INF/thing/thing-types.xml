@@ -26,7 +26,11 @@
 			<channel id="indication-hour" typeId="channel-indication">
 			    <label>Cheap/Expensive hours</label>
                 <description>Indicates cheap, expensive and normal hours. 0 - Normal, 1 - Cheap, -1 - Expensive</description>
-			</channel>	
+			</channel>
+			<channel id="warning-hour" typeId="channel-warning">
+                <label>High price warning</label>
+                <description>Warning when the electricity price will be high after the configured hours</description>
+            </channel>	
 		</channels>
 
 		<config-description>
@@ -41,6 +45,14 @@
             <parameter name="priceTreshold" type="integer" required="false">
                 <label>Treshold (%) for cheap/expensive hours</label>
                 <description>Treshold in percentage of the average hour</description>
+            </parameter>
+            <parameter name="numberOfHoursBeforeWarning" type="integer" required="false">
+                <label>Number of hours before warning</label>
+                <description>Number of hours before peak electricity warning</description>
+            </parameter>
+            <parameter name="warningTreshold" type="integer" required="false">
+                <label>Treshold (%) for peak electricity</label>
+                <description>Treshold in percentage for the peak electricity price</description>
             </parameter>
             <parameter name="excludeNightlyHours" type="boolean" required="false">
                 <label>Exclude nightly hours</label>
@@ -64,6 +76,12 @@
         <item-type>Number</item-type>
         <label>Indication</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
         <description>Cheap of expensive hour</description>
+        <state readOnly="true"></state>
+    </channel-type>
+    <channel-type id="channel-warning">
+        <item-type>Switch</item-type>
+        <label>Warning</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Price warning</description>
         <state readOnly="true"></state>
     </channel-type>
 </thing:thing-descriptions>
