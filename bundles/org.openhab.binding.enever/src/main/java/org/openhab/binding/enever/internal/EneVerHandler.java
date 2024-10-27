@@ -29,7 +29,6 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.library.types.DecimalType;
-import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -93,6 +92,8 @@ public class EneVerHandler extends BaseThingHandler {
 
     private String token = "";
 
+    private @Nullable Prices prices = null;
+
     private double treshold = 0;
 
     private boolean excludeNightlyHours = false;
@@ -130,28 +131,33 @@ public class EneVerHandler extends BaseThingHandler {
         if (configure()) {
 
             // get prices for today
-            if (retrieveElectricityPrices(true) && retrieveGasPrice()) {
+            prices = new Prices(token);
+            try {
+                prices.refresh();
                 updateStatus(ThingStatus.ONLINE);
-            } else {
-                updateStatus(ThingStatus.OFFLINE);
+            } catch (EneVerException ex) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                        "Unable to parse data response from device");
+                return;
             }
-            var now = LocalDateTime.now();
 
             // update channels
             determineCheapAndExpensiveHours();
             updateDailyChannels();
-            updateHourlyChannels(now.getHour());
+            updateHourlyChannels();
+
+            var now = LocalDateTime.now();
 
             // schedule get prices next day
             long nextDailyScheduleInNanos = Duration
-                    .between(now, now.withHour(23).withMinute(55).withSecond(0).withNano(0)).toNanos();
-            dailyJob = scheduler.scheduleWithFixedDelay(this::scheduleDailyPrices, nextDailyScheduleInNanos,
+                    .between(now, now.plusDays(1).withHour(0).withMinute(0).withSecond(5).withNano(0)).toNanos();
+            dailyJob = scheduler.scheduleWithFixedDelay(this::updateDailyChannels, nextDailyScheduleInNanos,
                     TimeUnit.DAYS.toNanos(1), TimeUnit.NANOSECONDS);
 
             // schedule update channels hourly
             long nextHourlyScheduleInNanos = Duration
                     .between(now, now.plusHours(1).withMinute(0).withSecond(0).withNano(0)).toNanos();
-            hourlyJob = scheduler.scheduleWithFixedDelay(this::scheduleHourlyPrices, nextHourlyScheduleInNanos,
+            hourlyJob = scheduler.scheduleWithFixedDelay(this::updateHourlyChannels, nextHourlyScheduleInNanos,
                     TimeUnit.HOURS.toNanos(1), TimeUnit.NANOSECONDS);
         }
     }
@@ -177,39 +183,6 @@ public class EneVerHandler extends BaseThingHandler {
             treshold = (double) config.priceTreshold / 100;
             return true;
         }
-    }
-
-    private boolean retrieveElectricityPrices(boolean today) {
-        String url;
-        if (today) {
-            url = "https://enever.nl/api/stroomprijs_vandaag.php?token=" + token;
-        } else {
-            url = "https://enever.nl/api/stroomprijs_morgen.php?token=" + token;
-        }
-
-        Payload p = null;
-        if (!debug) {
-            p = retrievePayload(url);
-        } else {
-            logger.debug("Using test electricity data");
-            p = gson.fromJson(testDataE, Payload.class);
-        }
-
-        if (p == null) {
-            return false;
-        }
-        if (p.getStatus()) {
-            ePrices = new Hashtable<>();
-            averagePrice = 0;
-
-            p.getPrices().forEach((price) -> {
-                ePrices.put(price.getTime().getHour(), price.getPrijs());
-                averagePrice += price.getPrijs();
-            });
-            averagePrice = averagePrice / ePrices.size();
-        }
-
-        return p.getStatus();
     }
 
     private boolean retrieveGasPrice() {
@@ -273,41 +246,50 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     private void updateDailyChannels() {
-        updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE, new DecimalType(averagePrice));
-        updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice));
+        if (prices != null) {
+            updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE,
+                    new DecimalType(prices.getAverageElectricityPrice()));
+            updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice));
+        }
     }
 
-    private void updateHourlyChannels(int hour) {
-        logger.debug("updating channels for " + hour);
-        if (ePrices.containsKey(hour)) {
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(ePrices.get(hour)));
+    @SuppressWarnings("null")
+    private void updateHourlyChannels() {
+
+        if (prices != null) {
+
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE,
+                    new DecimalType(prices.getElectricityPrice()));
+
+            var isCheap = prices.isElectricityCheap(treshold, numberOfHours, excludeNightlyHours);
+            var isExpensive = prices.isElectricityExpensive(treshold, numberOfHours, excludeNightlyHours);
+
+            if (isCheap) {
+                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(1));
+            } else if (isExpensive) {
+                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(-1));
+            } else {
+                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(0));
+            }
         }
 
-        if (cheapHours.contains(hour)) {
-            updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(1));
-        } else if (expensiveHours.contains(hour)) {
-            updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(-1));
-        } else {
-            updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(0));
-        }
-
-        if (ePrices.containsKey(hour) && ePrices.containsKey(hour + numberOfHoursBeforeWarning)) {
-            var warn = ePrices.get(hour) * (1 + warningTreshold) < ePrices.get(hour + numberOfHoursBeforeWarning);
-            updateState(EneVerBindingConstants.CHANNEL_PRICE_WARNING, OnOffType.from(warn));
-        } else {
-            updateState(EneVerBindingConstants.CHANNEL_PRICE_WARNING, OnOffType.from(false));
-        }
+        // if (ePrices.containsKey(hour) && ePrices.containsKey(hour + numberOfHoursBeforeWarning)) {
+        // var warn = ePrices.get(hour) * (1 + warningTreshold) < ePrices.get(hour + numberOfHoursBeforeWarning);
+        // updateState(EneVerBindingConstants.CHANNEL_PRICE_WARNING, OnOffType.from(warn));
+        // } else {
+        // updateState(EneVerBindingConstants.CHANNEL_PRICE_WARNING, OnOffType.from(false));
+        // }
     }
 
     protected void scheduleDailyPrices() {
-        retrieveElectricityPrices(false);
+        // retrieveElectricityPrices(false);
         retrieveGasPrice();
         determineCheapAndExpensiveHours();
         updateDailyChannels();
     }
 
     protected void scheduleHourlyPrices() {
-        updateHourlyChannels(LocalDateTime.now().getHour());
+        updateHourlyChannels();
     }
 
     private void determineCheapAndExpensiveHours() {
