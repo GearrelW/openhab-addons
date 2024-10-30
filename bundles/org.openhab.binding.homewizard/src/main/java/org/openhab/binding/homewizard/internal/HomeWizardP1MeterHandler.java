@@ -1,5 +1,4 @@
 /**
-<<<<<<< HEAD
  * Copyright (c) 2010-2022 Contributors to the openHAB project
 =======
  * Copyright (c) 2010-2024 Contributors to the openHAB project
@@ -85,6 +84,8 @@ public class HomeWizardP1MeterHandler extends HomeWizardDeviceHandler {
 
         updateState(HomeWizardBindingConstants.CHANNEL_ACTIVE_POWER,
                 new QuantityType<>(payload.getActivePowerW(), Units.WATT));
+        updateState(HomeWizardBindingConstants.CHANNEL_ACTIVE_VOLTAGE_V,
+                new QuantityType<>(payload.getActiveVoltage(), Units.VOLT));
         updateState(HomeWizardBindingConstants.CHANNEL_ACTIVE_POWER_L1,
                 new QuantityType<>(payload.getActivePowerL1W(), Units.WATT));
         updateState(HomeWizardBindingConstants.CHANNEL_ACTIVE_POWER_L2,

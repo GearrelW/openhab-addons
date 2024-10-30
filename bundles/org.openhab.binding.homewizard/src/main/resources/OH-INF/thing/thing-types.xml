@@ -16,6 +16,7 @@
 			<channel id="total_energy_export_t1" typeId="total_energy_export_t1"/>
 			<channel id="total_energy_export_t2" typeId="total_energy_export_t2"/>
 			<channel id="active_power" typeId="active_power"/>
+			<channel id="active_voltage_v" typeId="active_voltage_v"/>
 			<channel id="active_power_l1" typeId="active_power_l1"/>
 			<channel id="active_power_l2" typeId="active_power_l2"/>
 			<channel id="active_power_l3" typeId="active_power_l3"/>

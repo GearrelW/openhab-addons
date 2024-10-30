@@ -80,13 +80,13 @@ public class Intergas_GatewayHandler extends BaseThingHandler {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                         String.format("Unable to query device data: %s", e.getMessage()));
             }
-            if (dataResult != null) {
-                Payload payload = gson.fromJson(dataResult, Payload.class);
-                if (payload != null) {
-                    updateState(Intergas_GatewayBindingConstants.CHANNEL_SET_POINT,
-                            new QuantityType<>(setPoint + 273.15, Units.KELVIN));
-                }
-            }
+            // if (dataResult != null) {
+            // Payload payload = gson.fromJson(dataResult, Payload.class);
+            // if (payload != null) {
+            // updateState(Intergas_GatewayBindingConstants.CHANNEL_SET_POINT,
+            // new QuantityType<>(setPoint + 273.15, Units.KELVIN));
+            // }
+            // }
         }
     }
 
@@ -162,8 +162,14 @@ public class Intergas_GatewayHandler extends BaseThingHandler {
             updateStatus(ThingStatus.ONLINE);
             updateState(Intergas_GatewayBindingConstants.CHANNEL_ROOM_TEMPERATURE,
                     new QuantityType<>(payload.getRoomTemperature() + 273.15, Units.KELVIN));
-            updateState(Intergas_GatewayBindingConstants.CHANNEL_SET_POINT,
-                    new QuantityType<>(payload.getRoomSetPointTemperature() + 273.15, Units.KELVIN));
+
+            var setPoint = payload.getRoomSetPointTemperature();
+            logger.debug("received setpoint  = " + setPoint);
+            if (setPoint > 10 && setPoint < 35) {
+                updateState(Intergas_GatewayBindingConstants.CHANNEL_SET_POINT,
+                        new QuantityType<>(setPoint + 273.15, Units.KELVIN));
+            }
+
             if (payload.getIo() == 10) {
                 heaterOn = true;
             }
