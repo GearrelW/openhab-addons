@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2022 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -50,8 +50,11 @@ public abstract class HomeWizardStatefulDeviceHandler extends HomeWizardP1MeterH
      *
      * @param payload The data parsed from the state Json file
      */
-    protected abstract void handleStatePayload(StatePayload payload);
+    abstract protected void handleStatePayload(StatePayload payload);
 
+    /**
+     *
+     */
     protected void pollState() {
         final String stateResult;
 
@@ -84,16 +87,18 @@ public abstract class HomeWizardStatefulDeviceHandler extends HomeWizardP1MeterH
      * @param command The command to send.
      */
     protected @Nullable StatePayload sendStateCommand(String command) {
-        try (InputStream is = new ByteArrayInputStream(command.getBytes())) {
+        StatePayload statePayload = null;
+        InputStream is = new ByteArrayInputStream(command.getBytes());
+        try {
             String updatedState = HttpUtil.executeUrl("PUT", apiURL + "state", is, "application/json", 30000);
-            return gson.fromJson(updatedState, StatePayload.class);
+            statePayload = gson.fromJson(updatedState, StatePayload.class);
         } catch (IOException e) {
             logger.warn("Failed to send command {} to {}", command, apiURL + "state");
-            return null;
         }
+        return statePayload;
     }
 
-    /*
+    /**
      * This overrides the original polling loop by including a request for the current state..
      */
     @Override

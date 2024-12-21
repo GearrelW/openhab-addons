@@ -83,8 +83,8 @@
 		<channels>
 			<channel id="total_energy_import_t1" typeId="total_energy_import_t1"/>
 			<channel id="total_energy_export_t1" typeId="total_energy_export_t1"/>
+			<channel id="active_voltage_v" typeId="active_voltage_v"/>
 			<channel id="active_power" typeId="active_power"/>
-
 			<channel id="power_switch" typeId="power_switch"/>
 			<channel id="power_lock" typeId="power_lock"/>
 			<channel id="ring_brightness" typeId="ring_brightness"/>
@@ -172,6 +172,14 @@
 		</description>
 	</channel-type>
 
+	<channel-type id="active_voltage_v">
+		<item-type>Number:ElectricPotential</item-type>
+		<label>Current Grid Voltage</label>
+		<description>
+			This channel provides the current grid voltage in V.
+		</description>
+	</channel-type>
+
 	<channel-type id="active_power">
 		<item-type>Number:Power</item-type>
 		<label>Current Total Net Power</label>
@@ -179,6 +187,7 @@
 			This channel provides the current net total power in W. It will be below 0 if power is currently being
 			exported.
 		</description>
+		<state readOnly="true" pattern="%.1f %unit%"></state>
 	</channel-type>
 
 	<channel-type id="active_power_l1">
@@ -232,7 +241,6 @@
 		<description>
 			This channel provides the most recently reported total imported water in m^3.
 		</description>
-		<state readOnly="true" pattern="%.3f %unit%"/>
 	</channel-type>
 
 	<channel-type id="current_water">
@@ -241,7 +249,6 @@
 		<description>
 			This channel provides the most recently reported current water usage in liters per minute.
 		</description>
-		<state readOnly="true" pattern="%.0f %unit%"/>
 	</channel-type>
 
 	<channel-type id="power_switch">
@@ -261,12 +268,11 @@
 	</channel-type>
 
 	<channel-type id="ring_brightness">
-		<item-type unitHint="%">Number:Dimensionless</item-type>
+		<item-type>Dimmer</item-type>
 		<label>Ring Brightness</label>
 		<description>
 			This channel provides access to the brightness of the ring of the Energysocket
 		</description>
-		<state readOnly="true" pattern="%.0f %unit%"/>
 	</channel-type>
 
 </thing:thing-descriptions>

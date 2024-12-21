@@ -1,7 +1,9 @@
 /**
  * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
- * See the NOTICE file(s) distributed with this work for additional
+ * See the
+
+NOTICE file(s) distributed with this work for additional
  * information.
  *
  * This program and the accompanying materials are made available under the
@@ -37,7 +39,7 @@ import com.google.gson.GsonBuilder;
  * The {@link HomeWizardDeviceHandler} is a base class for all
  * HomeWizard devices. It provides configuration and polling of
  * data from a device. It also processes common data.
- * 
+ *
  * @author Daniël van Os - Initial contribution
  */
 @NonNullByDefault

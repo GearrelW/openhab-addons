@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+ * Copyright (c) 2010-2022 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -122,13 +122,15 @@ public class HomeWizardEnergySocketHandler extends HomeWizardStatefulDeviceHandl
      * @param payload The data parsed from the Json file
      */
     @Override
-    protected void handleDataPayload(DataPayload payload) {
+    protected void handleDataPayload(@Nullable DataPayload payload) {
         updateState(HomeWizardBindingConstants.CHANNEL_ENERGY_IMPORT_T1,
                 new QuantityType<>(payload.getTotalEnergyImportT1Kwh(), Units.KILOWATT_HOUR));
         updateState(HomeWizardBindingConstants.CHANNEL_ENERGY_EXPORT_T1,
                 new QuantityType<>(payload.getTotalEnergyExportT1Kwh(), Units.KILOWATT_HOUR));
         updateState(HomeWizardBindingConstants.CHANNEL_ACTIVE_POWER,
                 new QuantityType<>(payload.getActivePowerW(), Units.WATT));
+        updateState(HomeWizardBindingConstants.CHANNEL_ACTIVE_VOLTAGE_V,
+                new QuantityType<>(payload.getActiveVoltage(), Units.VOLT));
     }
 
     @Override
