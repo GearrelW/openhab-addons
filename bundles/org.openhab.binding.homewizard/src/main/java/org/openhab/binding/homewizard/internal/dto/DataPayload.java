@@ -44,10 +44,10 @@ public class DataPayload {
     @SerializedName("total_power_export_t2_kwh")
     private double totalEnergyExportT2Kwh;
 
-    private int activePowerW;
-    private int activePowerL1W;
-    private int activePowerL2W;
-    private int activePowerL3W;
+    private double activePowerW;
+    private double activePowerL1W;
+    private double activePowerL2W;
+    private double activePowerL3W;
     private double totalGasM3;
     private long gasTimestamp = 0;
 
@@ -247,7 +247,7 @@ public class DataPayload {
      *
      * @return current active total power
      */
-    public int getActivePowerW() {
+    public double getActivePowerW() {
         return activePowerW;
     }
 
@@ -256,7 +256,7 @@ public class DataPayload {
      *
      * @return current active total power on phase 2
      */
-    public int getActivePowerL1W() {
+    public double getActivePowerL1W() {
         return activePowerL1W;
     }
 
@@ -265,7 +265,7 @@ public class DataPayload {
      *
      * @return current active total power on phase 2
      */
-    public int getActivePowerL2W() {
+    public double getActivePowerL2W() {
         return activePowerL2W;
     }
 
@@ -274,7 +274,7 @@ public class DataPayload {
      *
      * @return current active total power on phase 3
      */
-    public int getActivePowerL3W() {
+    public double getActivePowerL3W() {
         return activePowerL3W;
     }
 
@@ -289,7 +289,7 @@ public class DataPayload {
 
     /**
      * Getter for the time stamp of the last gas update
-     * 
+     *
      * @param zoneId The time zone id for the return value, falls back to systemDefault() when null
      * @return time stamp of the last gas update as ZonedDateTime
      * @throws DateTimeException When the method fails to create a ZonedDateTime
@@ -347,7 +347,7 @@ public class DataPayload {
                 + " activePowerW: %f activePowerL1W: %f activePowerL2W: %f activePowerL3W: %f activeVoltageV: %f totalGasM3: %f gasTimestamp: %.0f"
                 + " totalWaterM3: %f currentWaterLPM: %f]", smrVersion, meterModel, wifiSsid, wifiStrength,
                 totalEnergyImportT1Kwh, totalEnergyImportT2Kwh, totalEnergyExportT1Kwh, totalEnergyExportT2Kwh,
-                activePowerW, activePowerL1W, activePowerL2W, activePowerL3W, activeVoltageV, gasTimestamp,
-                totalWaterM3, currentWaterLPM);
+                activePowerW, activePowerL1W, activePowerL2W, activePowerL3W, activeVoltage, gasTimestamp, totalWaterM3,
+                currentWaterLPM);
     }
 }

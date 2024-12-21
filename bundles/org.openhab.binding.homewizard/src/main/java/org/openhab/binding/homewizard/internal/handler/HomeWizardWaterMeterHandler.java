@@ -58,7 +58,7 @@ public class HomeWizardWaterMeterHandler extends HomeWizardP1MeterHandler {
      * @param payload The data parsed from the Json file
      */
     @Override
-    protected void handleDataPayload(@Nullable DataPayload payload) {
+    protected void handleDataPayload(DataPayload payload) {
         updateState(HomeWizardBindingConstants.CHANNEL_CURRENT_WATER,
                 new QuantityType<>(payload.getCurrentWaterLPM(), Units.LITRE_PER_MINUTE));
         updateState(HomeWizardBindingConstants.CHANNEL_TOTAL_WATER,

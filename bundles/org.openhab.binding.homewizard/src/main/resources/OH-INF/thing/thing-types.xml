@@ -83,7 +83,7 @@
 		<channels>
 			<channel id="total_energy_import_t1" typeId="total_energy_import_t1"/>
 			<channel id="total_energy_export_t1" typeId="total_energy_export_t1"/>
-			<channel id="active_voltage_v" typeId="active_voltage_v"/>
+			<channel id="active_voltage" typeId="active_voltage"/>
 			<channel id="active_power" typeId="active_power"/>
 			<channel id="power_switch" typeId="power_switch"/>
 			<channel id="power_lock" typeId="power_lock"/>
@@ -172,11 +172,11 @@
 		</description>
 	</channel-type>
 
-	<channel-type id="active_voltage_v">
+	<channel-type id="active_voltage">
 		<item-type>Number:ElectricPotential</item-type>
 		<label>Current Grid Voltage</label>
 		<description>
-			This channel provides the current grid voltage in V.
+			This channel provides the current grid voltage.
 		</description>
 	</channel-type>
 

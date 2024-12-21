@@ -68,7 +68,7 @@ public class HomeWizardP1MeterHandler extends HomeWizardDeviceHandler {
      * @param payload The data parsed from the Json file
      */
     @Override
-    protected void handleDataPayload(@Nullable DataPayload payload) {
+    protected void handleDataPayload(DataPayload payload) {
         if (!meterModel.equals(payload.getMeterModel())) {
             meterModel = payload.getMeterModel();
             updateProperty(HomeWizardBindingConstants.PROPERTY_METER_MODEL, meterModel);
