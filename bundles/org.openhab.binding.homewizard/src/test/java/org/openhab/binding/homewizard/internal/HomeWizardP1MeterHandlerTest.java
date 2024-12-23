@@ -103,7 +103,7 @@ public class HomeWizardP1MeterHandlerTest {
         final HomeWizardP1MeterHandlerMock handler = spy(new HomeWizardP1MeterHandlerMock(thing, timeZoneProvider));
 
         try {
-            doReturn(DataUtil.fromFile("response.json")).when(handler).getData();
+            doReturn(DataUtil.fromFile("P1-response.json")).when(handler).getData();
         } catch (IOException e) {
             assertFalse(true);
         }

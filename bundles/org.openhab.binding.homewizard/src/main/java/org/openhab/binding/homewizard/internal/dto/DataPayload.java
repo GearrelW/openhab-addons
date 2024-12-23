@@ -35,10 +35,14 @@ public class DataPayload {
     private String wifiSsid = "";
     private int wifiStrength = 0;
 
+    @SerializedName("total_power_import_kwh")
+    private double totalEnergyImportKwh;
     @SerializedName("total_power_import_t1_kwh")
     private double totalEnergyImportT1Kwh;
     @SerializedName("total_power_import_t2_kwh")
     private double totalEnergyImportT2Kwh;
+    @SerializedName("total_power_export_kwh")
+    private double totalEnergyExportKwh;
     @SerializedName("total_power_export_t1_kwh")
     private double totalEnergyExportT1Kwh;
     @SerializedName("total_power_export_t2_kwh")
@@ -117,6 +121,15 @@ public class DataPayload {
     }
 
     /**
+     * Getter for the total imported energy
+     *
+     * @return total imported energy
+     */
+    public double getTotalEnergyImportKwh() {
+        return totalEnergyImportKwh;
+    }
+
+    /**
      * Getter for the total imported energy on counter 1
      *
      * @return total imported energy on counter 1
@@ -132,6 +145,15 @@ public class DataPayload {
      */
     public double getTotalEnergyImportT2Kwh() {
         return totalEnergyImportT2Kwh;
+    }
+
+    /**
+     * Getter for the total exported energy
+     *
+     * @return total exported energy
+     */
+    public double getTotalEnergyExportKwh() {
+        return totalEnergyExportKwh;
     }
 
     /**

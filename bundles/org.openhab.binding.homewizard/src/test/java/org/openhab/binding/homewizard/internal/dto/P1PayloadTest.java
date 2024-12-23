@@ -12,8 +12,7 @@
  */
 package org.openhab.binding.homewizard.internal.dto;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -36,17 +35,17 @@ public class P1PayloadTest {
 
     @Test
     public void deserializeResponse() throws IOException {
-        DataPayload key = DATA_UTIL.fromJson("response.json", DataPayload.class);
+        DataPayload key = DATA_UTIL.fromJson("P1-response.json", DataPayload.class);
         assertThat(key, is(notNullValue()));
 
         assertThat(key.getActiveCurrent(), is(567.0));
         assertThat(key.getActiveCurrentL1(), is(-4.0));
         assertThat(key.getActiveCurrentL2(), is(2.0));
         assertThat(key.getActiveCurrentL3(), is(333.0));
-        assertThat(key.getActivePowerW(), is(-543));
-        assertThat(key.getActivePowerL1W(), is(-676));
-        assertThat(key.getActivePowerL2W(), is(133));
-        assertThat(key.getActivePowerL3W(), is(18));
+        assertThat(key.getActivePowerW(), is(-543.0));
+        assertThat(key.getActivePowerL1W(), is(-676.0));
+        assertThat(key.getActivePowerL2W(), is(133.0));
+        assertThat(key.getActivePowerL3W(), is(18.0));
         assertThat(key.getActiveVoltage(), is(220.0));
         assertThat(key.getActiveVoltageL1(), is(221.0));
         assertThat(key.getActiveVoltageL2(), is(222.0));
@@ -76,10 +75,10 @@ public class P1PayloadTest {
         assertThat(key.getActiveCurrentL1(), is(0.0));
         assertThat(key.getActiveCurrentL2(), is(0.0));
         assertThat(key.getActiveCurrentL3(), is(0.0));
-        assertThat(key.getActivePowerW(), is(0));
-        assertThat(key.getActivePowerL1W(), is(0));
-        assertThat(key.getActivePowerL2W(), is(0));
-        assertThat(key.getActivePowerL3W(), is(0));
+        assertThat(key.getActivePowerW(), is(0.0));
+        assertThat(key.getActivePowerL1W(), is(0.0));
+        assertThat(key.getActivePowerL2W(), is(0.0));
+        assertThat(key.getActivePowerL3W(), is(0.0));
         assertThat(key.getActiveVoltage(), is(0.0));
         assertThat(key.getActiveVoltageL1(), is(0.0));
         assertThat(key.getActiveVoltageL2(), is(0.0));
