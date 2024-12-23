@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.homewizard.internal.dto;
+package org.openhab.binding.homewizard.internal.dto.v1;
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
@@ -32,8 +32,8 @@ import com.google.gson.annotations.SerializedName;
 public class DataPayload {
     private int smrVersion = 0;
     private String meterModel = "";
-    private String wifiSsid = "";
-    private int wifiStrength = 0;
+    protected String wifiSsid = "";
+    protected int wifiStrength = 0;
 
     @SerializedName("total_power_import_t1_kwh")
     private double totalEnergyImportT1Kwh;
