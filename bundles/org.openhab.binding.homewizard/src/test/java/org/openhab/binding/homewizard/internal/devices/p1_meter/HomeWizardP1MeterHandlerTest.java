@@ -97,7 +97,9 @@ public class HomeWizardP1MeterHandlerTest extends HomeWizardHandlerTest {
                 mockChannel(thing.getUID(), HomeWizardBindingConstants.CHANNEL_GROUP_ENERGY,
                         HomeWizardBindingConstants.CHANNEL_GAS_TIMESTAMP), //
                 mockChannel(thing.getUID(), HomeWizardBindingConstants.CHANNEL_GROUP_ENERGY,
-                        HomeWizardBindingConstants.CHANNEL_GAS_TOTAL));
+                        HomeWizardBindingConstants.CHANNEL_GAS_TOTAL),
+                mockChannel(thing.getUID(), HomeWizardBindingConstants.CHANNEL_GROUP_SYSTEM,
+                        HomeWizardBindingConstants.CHANNEL_WIFI_RSSI));
 
         when(thing.getChannels()).thenReturn(channelList);
         return thing;
@@ -113,6 +115,7 @@ public class HomeWizardP1MeterHandlerTest extends HomeWizardHandlerTest {
             doReturn(DataUtil.fromFile("response-device-information-p1-meter.json")).when(handler)
                     .getDeviceInformationData();
             doReturn(DataUtil.fromFile("response-measurement-p1-meter.json")).when(handler).getMeasurementData();
+            doReturn(DataUtil.fromFile("response-system.json")).when(handler).getSystemData();
         } catch (Exception e) {
             assertFalse(true);
         }
@@ -176,6 +179,9 @@ public class HomeWizardP1MeterHandlerTest extends HomeWizardHandlerTest {
                     new DateTimeType(ZonedDateTime.of(2021, 6, 06, 14, 0, 10, 0, ZoneId.systemDefault())));
             verify(callback).stateUpdated(getEnergyChannelUid(thing, HomeWizardBindingConstants.CHANNEL_GAS_TOTAL),
                     getState(2569.646, SIUnits.CUBIC_METRE));
+
+            verify(callback).stateUpdated(getSystemChannelUid(thing, HomeWizardBindingConstants.CHANNEL_WIFI_RSSI),
+                    getState(-77));
         } finally {
             handler.dispose();
         }

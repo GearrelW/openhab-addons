@@ -49,6 +49,7 @@ public class HomeWizardBindingConstants {
     // Channel Groups
     public static final String CHANNEL_GROUP_ENERGY = "energy";
     public static final String CHANNEL_GROUP_WATER = "water";
+    public static final String CHANNEL_GROUP_SYSTEM = "system";
     public static final String CHANNEL_GROUP_SKT_CONTROL = "control";
 
     // Energy Meter Channels
@@ -105,4 +106,10 @@ public class HomeWizardBindingConstants {
     //
     public static final String PROPERTY_METER_MODEL = "meterModel";
     public static final String PROPERTY_METER_VERSION = "meterVersion";
+
+    // System Channels
+    public static final String CHANNEL_WIFI_SSID = "wifi_ssid";
+    public static final String CHANNEL_WIFI_RSSI = "wifi_rssi";
+    public static final String CHANNEL_CLOUD_ENABLED = "cloud_enabled";
+    public static final String CHANNEL_STATUS_LED_BRIGHTNESS = "status_led_brightness";
 }

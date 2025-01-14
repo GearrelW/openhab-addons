@@ -10,6 +10,24 @@
 			<description>The IP or host name of the HomeWizard device.</description>
 			<context>network-address</context>
 		</parameter>
+		<parameter name="bearerToken" type="text" required="true">
+			<label>Bearer Token</label>
+			<description>The bearer token to be used when using the API.</description>
+		</parameter>
+		<parameter name="refreshDelay" type="integer" min="1" unit="s">
+			<label>Refresh Interval</label>
+			<description>The refresh interval in seconds for polling the HomeWizard device.</description>
+			<advanced>true</advanced>
+			<default>5</default>
+		</parameter>
+	</config-description>
+
+	<config-description uri="thing-type:homewizard:device-v1">
+		<parameter name="ipAddress" type="text" required="true">
+			<label>Network Address</label>
+			<description>The IP or host name of the HomeWizard device.</description>
+			<context>network-address</context>
+		</parameter>
 		<parameter name="refreshDelay" type="integer" min="1" unit="s">
 			<label>Refresh Interval</label>
 			<description>The refresh interval in seconds for polling the HomeWizard device.</description>

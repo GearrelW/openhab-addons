@@ -81,4 +81,8 @@ public class HomeWizardHandlerTest {
     protected static ChannelUID getEnergyChannelUid(Thing thing, String channelId) {
         return new ChannelUID(thing.getUID(), HomeWizardBindingConstants.CHANNEL_GROUP_ENERGY + "#" + channelId);
     }
+
+    protected static ChannelUID getSystemChannelUid(Thing thing, String channelId) {
+        return new ChannelUID(thing.getUID(), HomeWizardBindingConstants.CHANNEL_GROUP_SYSTEM + "#" + channelId);
+    }
 }

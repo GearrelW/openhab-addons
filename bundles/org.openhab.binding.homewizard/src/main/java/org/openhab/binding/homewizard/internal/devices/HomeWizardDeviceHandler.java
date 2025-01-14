@@ -12,7 +12,6 @@
  */
 package org.openhab.binding.homewizard.internal.devices;
 
-import java.io.IOException;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
@@ -28,7 +27,13 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.openhab.binding.homewizard.internal.HomeWizardBindingConstants;
 import org.openhab.binding.homewizard.internal.HomeWizardConfiguration;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
+import org.openhab.core.library.unit.Units;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
@@ -212,12 +217,28 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
         updateState(groupID + "#" + channelID, state);
     }
 
+    protected void handleSystemDataPayload(String data) {
+        var payload = gson.fromJson(data, HomeWizardSystemPayload.class);
+        if (payload != null) {
+
+            updateState(HomeWizardBindingConstants.CHANNEL_GROUP_SYSTEM, HomeWizardBindingConstants.CHANNEL_WIFI_SSID,
+                    new StringType(payload.getWifiSSID()));
+            updateState(HomeWizardBindingConstants.CHANNEL_GROUP_SYSTEM, HomeWizardBindingConstants.CHANNEL_WIFI_RSSI,
+                    new QuantityType<>(payload.getWifiRSSI(), Units.DECIBEL));
+            updateState(HomeWizardBindingConstants.CHANNEL_GROUP_SYSTEM,
+                    HomeWizardBindingConstants.CHANNEL_CLOUD_ENABLED, OnOffType.from(payload.getCloudEnabled()));
+            updateState(HomeWizardBindingConstants.CHANNEL_GROUP_SYSTEM,
+                    HomeWizardBindingConstants.CHANNEL_STATUS_LED_BRIGHTNESS,
+                    new DecimalType(payload.getStatusLEDBrightness()));
+        }
+    }
+
     /**
      * Device specific handling of the returned data.
      *
      * @param payload The data obtained form the API call
      */
-    protected abstract void handleDataPayload(String data);
+    protected abstract void handleMeasurementDataPayload(String data);
 
     protected ContentResponse getResponseFrom(String url)
             throws InterruptedException, TimeoutException, ExecutionException {
@@ -245,7 +266,7 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
 
     /**
      * @return json response from the measurement api
-     * @throws IOException
+     * @throws InterruptedException, TimeoutException, ExecutionException
      */
     public String getMeasurementData() throws InterruptedException, TimeoutException, ExecutionException {
         var url = apiURL;
@@ -258,7 +279,15 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
         return getResponseFrom(url).getContentAsString();
     }
 
-    protected void pollData() {
+    /**
+     * @return json response from the system api
+     * @throws InterruptedException, TimeoutException, ExecutionException
+     */
+    public String getSystemData() throws InterruptedException, TimeoutException, ExecutionException {
+        return getResponseFrom(apiURL + "system").getContentAsString();
+    }
+
+    protected void pollMeasurementData() {
         final String measurementData;
 
         try {
@@ -270,13 +299,31 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
         }
 
         updateStatus(ThingStatus.ONLINE);
-        handleDataPayload(measurementData);
+        handleMeasurementDataPayload(measurementData);
+    }
+
+    protected void pollSystemData() {
+        final String systemData;
+
+        try {
+            systemData = getSystemData();
+        } catch (Exception e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                    String.format("Device is offline or doesn't support the API version"));
+            return;
+        }
+
+        updateStatus(ThingStatus.ONLINE);
+        handleSystemDataPayload(systemData);
     }
 
     /**
      * The actual polling loop
      */
     protected void pollingCode() {
-        pollData();
+        pollMeasurementData();
+        if (config.apiVersion > 1) {
+            pollSystemData();
+        }
     }
 }

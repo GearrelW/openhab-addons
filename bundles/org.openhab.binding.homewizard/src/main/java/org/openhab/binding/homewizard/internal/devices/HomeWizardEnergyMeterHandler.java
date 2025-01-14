@@ -51,7 +51,7 @@ public class HomeWizardEnergyMeterHandler extends HomeWizardDeviceHandler {
      * @param data The data obtained form the API call
      */
     @Override
-    protected void handleDataPayload(String data) {
+    protected void handleMeasurementDataPayload(String data) {
         var payload = gson.fromJson(data, HomeWizardEnergyMeterMeasurementPayload.class);
         if (payload != null) {
             if (!thing.getThingTypeUID().equals(HomeWizardBindingConstants.THING_TYPE_P1_METER)

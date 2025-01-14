@@ -57,7 +57,7 @@ public class HomeWizardWaterMeterHandler extends HomeWizardDeviceHandler {
      */
     @SuppressWarnings("null")
     @Override
-    protected void handleDataPayload(String data) {
+    protected void handleMeasurementDataPayload(String data) {
         var payload = gson.fromJson(data, HomeWizardWaterMeterDataPayload.class);
 
         if (!thing.getThingTypeUID().equals(HomeWizardBindingConstants.THING_TYPE_WATERMETER)) {

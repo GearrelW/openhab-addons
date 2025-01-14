@@ -112,7 +112,7 @@ public abstract class HomeWizardEnergySocketStateHandler extends HomeWizardEnerg
      */
     @Override
     protected void pollingCode() {
-        pollData();
+        super.pollingCode();
         pollState();
     }
 }

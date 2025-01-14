@@ -11,12 +11,13 @@
 
 		<channel-groups>
 			<channel-group id="energy" typeId="p1-energy-group"/>
+			<channel-group id="system" typeId="hw-system-group"/>
 		</channel-groups>
 		<properties>
-			<property name="thingTypeVersion">1</property>
+			<property name="thingTypeVersion">2</property>
 		</properties>
 
-		<config-description-ref uri="thing-type:homewizard:device"/>
+		<config-description-ref uri="thing-type:homewizard:device-v1"/>
 	</thing-type>
 
 	<channel-group-type id="p1-energy-group">
