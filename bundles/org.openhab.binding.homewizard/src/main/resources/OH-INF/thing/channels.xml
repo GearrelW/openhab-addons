@@ -28,6 +28,7 @@
 		<description>
 			This channel provides the signal strength of the Wi-Fi network.
 		</description>
+		<category>QualityOfService</category>
 	</channel-type>
 
 	<channel-type id="hw-cloud-enabled">
@@ -36,6 +37,7 @@
 		<description>
 			This channel provides the state of the cloud communication.
 		</description>
+		<category>Switch</category>
 	</channel-type>
 
 	<channel-type id="hw-status-led-brightness">

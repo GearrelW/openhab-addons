@@ -33,7 +33,7 @@
 		<description>
 			This channel provides the active water usage in liters per minute.
 		</description>
-
+		<category>Water</category>
 	</channel-type>
 
 	<channel-type id="es-total-liter">
@@ -42,7 +42,7 @@
 		<description>
 			This channel provides total water usage in cubic meters.
 		</description>
-
+		<category>Water</category>
 	</channel-type>
 
 </thing:thing-descriptions>

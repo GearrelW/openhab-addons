@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.binding.homewizard.internal.devices.energy_display.HomeWizardEnergyDisplayHandler;
 import org.openhab.binding.homewizard.internal.devices.energy_socket.HomeWizardEnergySocketHandler;
 import org.openhab.binding.homewizard.internal.devices.kwh_meter.HomeWizardKwhMeterHandler;
 import org.openhab.binding.homewizard.internal.devices.p1_meter.HomeWizardP1MeterHandler;
@@ -46,8 +47,8 @@ import org.osgi.service.component.annotations.Reference;
 public class HomeWizardHandlerFactory extends BaseThingHandlerFactory {
 
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_HWE_P1, THING_TYPE_HWE_SKT,
-            THING_TYPE_HWE_WTR, THING_TYPE_HWE_KWH, THING_TYPE_HWE_BAT, THING_TYPE_P1_METER, THING_TYPE_ENERGY_SOCKET,
-            THING_TYPE_WATERMETER);
+            THING_TYPE_HWE_WTR, THING_TYPE_HWE_KWH, THING_TYPE_HWE_BAT, THING_TYPE_HWE_DSP, THING_TYPE_P1_METER,
+            THING_TYPE_ENERGY_SOCKET, THING_TYPE_WATERMETER);
 
     private final TimeZoneProvider timeZoneProvider;
 
@@ -83,6 +84,10 @@ public class HomeWizardHandlerFactory extends BaseThingHandlerFactory {
 
         if (THING_TYPE_HWE_BAT.equals(thingTypeUID)) {
             return new HomeWizardPlugInBatteryHandler(thing);
+        }
+
+        if (THING_TYPE_HWE_DSP.equals(thingTypeUID)) {
+            return new HomeWizardEnergyDisplayHandler(thing);
         }
 
         return null;

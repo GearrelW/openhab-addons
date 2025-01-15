@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="homewizard"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<thing-type id="HWE-DSP">
+		<label>HomeWizard Energy Display</label>
+		<description>This thing provides the measurement data that is available through the API of a HomeWizard
+			Energy Display.</description>
+
+		<channel-groups>
+			<channel-group id="system" typeId="hw-system-group"/>
+		</channel-groups>
+		<properties>
+			<property name="thingTypeVersion">2</property>
+		</properties>
+
+		<config-description-ref uri="thing-type:homewizard:device"/>
+	</thing-type>
+
+</thing:thing-descriptions>

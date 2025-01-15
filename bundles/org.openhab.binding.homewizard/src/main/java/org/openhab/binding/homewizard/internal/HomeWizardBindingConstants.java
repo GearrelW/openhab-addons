@@ -34,6 +34,7 @@ public class HomeWizardBindingConstants {
     public static final String HWE_WTR = "HWE-WTR";
     public static final String HWE_KWH = "HWE-KWH";
     public static final String HWE_BAT = "HWE-BAT";
+    public static final String HWE_DSP = "HWE-DSP";
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_HWE_P1 = new ThingTypeUID(BINDING_ID, HWE_P1);
@@ -41,6 +42,7 @@ public class HomeWizardBindingConstants {
     public static final ThingTypeUID THING_TYPE_HWE_WTR = new ThingTypeUID(BINDING_ID, HWE_WTR);
     public static final ThingTypeUID THING_TYPE_HWE_KWH = new ThingTypeUID(BINDING_ID, HWE_KWH);
     public static final ThingTypeUID THING_TYPE_HWE_BAT = new ThingTypeUID(BINDING_ID, HWE_BAT);
+    public static final ThingTypeUID THING_TYPE_HWE_DSP = new ThingTypeUID(BINDING_ID, HWE_DSP);
 
     public static final ThingTypeUID THING_TYPE_P1_METER = new ThingTypeUID(BINDING_ID, "p1_wifi_meter");
     public static final ThingTypeUID THING_TYPE_ENERGY_SOCKET = new ThingTypeUID(BINDING_ID, "energy_socket");
