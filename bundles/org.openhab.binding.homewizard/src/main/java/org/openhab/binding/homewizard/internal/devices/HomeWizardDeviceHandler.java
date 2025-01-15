@@ -64,8 +64,8 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
 
     protected ScheduledExecutorService executorService = this.scheduler;
     protected HomeWizardConfiguration config = new HomeWizardConfiguration();
-    private @Nullable ScheduledFuture<?> pollingJob;
-    private HttpClient httpClient = new HttpClient();
+    private @Nullable ScheduledFuture<?> dataJob;
+    private @Nullable HttpClient httpClient = null;
 
     protected List<String> supportedTypes = new ArrayList<String>();
     protected String apiURL = "";
@@ -80,47 +80,25 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
     }
 
     /**
-     * If a host has been specified start polling it
+     * Check the configuration and retrieve device information. If everything is correct, start retrieving data.
      */
     @Override
     public void initialize() {
         config = getConfigAs(HomeWizardConfiguration.class);
 
-        if (config.apiVersion > 1) {
-            String caCertPath = "homewizard-ca-cert.pem";
-
-            // Create an SSL context factory and set the CA certificate
-            KeyStore keyStore = null;
-            ClassLoader classloader = this.getClass().getClassLoader();
-            if (classloader != null) {
-                try {
-                    keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                    keyStore.load(null, null);
-                    keyStore.setCertificateEntry("caCert", CertificateFactory.getInstance("X.509")
-                            .generateCertificate(classloader.getResourceAsStream(caCertPath)));
-                } catch (Exception ex) {
-                }
-
-                SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
-                sslContextFactory.setTrustStore(keyStore);
-                sslContextFactory.setEndpointIdentificationAlgorithm(null);
-                sslContextFactory.setHostnameVerifier((hostname, sslSession) -> true);
-                httpClient = new HttpClient(sslContextFactory);
-            }
-        }
-
-        if (configure() && processDeviceInformation()) {
-            pollingJob = executorService.scheduleWithFixedDelay(this::pollingCode, 0, config.refreshDelay,
+        if (checkConfiguration() && retrieveAndCheckDeviceInformation()) {
+            dataJob = executorService.scheduleWithFixedDelay(this::retrieveAndProcessData, 0, config.refreshDelay,
                     TimeUnit.SECONDS);
+            updateStatus(ThingStatus.ONLINE);
         }
     }
 
     /**
      * Check the current configuration
      *
-     * @return true if the configuration is ok to start polling, false otherwise
+     * @return true if the configuration is correct, false otherwise
      */
-    private boolean configure() {
+    private boolean checkConfiguration() {
         if (config.ipAddress.isBlank()) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                     "Missing ipAddress/host configuration");
@@ -138,24 +116,20 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
             apiURL = String.format("http://%s/api/", config.ipAddress.trim());
         }
 
-        try {
-            httpClient.setConnectTimeout(30000);
-            httpClient.start();
-        } catch (Exception ex) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                    String.format("Unable to communicate with the device: %s", ex.getMessage()));
-            return false;
-        }
-
         return true;
     }
 
+    /**
+     * Retrieve and check the device information obtained via the device information api.
+     *
+     * @return true if the device information was retrieved correctly, false otherwise
+     */
     @SuppressWarnings("null")
-    private boolean processDeviceInformation() {
+    private boolean retrieveAndCheckDeviceInformation() {
         final String deviceInformation;
 
         try {
-            deviceInformation = getDeviceInformationData();
+            deviceInformation = retrieveDeviceInformationData();
         } catch (Exception ex) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                     String.format("Unable to query device: %s", ex.getMessage()));
@@ -193,16 +167,62 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
      */
     @Override
     public void dispose() {
-        var job = pollingJob;
+        var job = dataJob;
         if (job != null) {
             job.cancel(true);
         }
-        pollingJob = null;
-        try {
-            httpClient.stop();
-        } catch (Exception ex) {
+        dataJob = null;
+        if (httpClient != null) {
+            try {
+                httpClient.stop();
+            } catch (Exception ex) {
 
+            }
         }
+    }
+
+    /**
+     * Retrieve the measurement and system data.
+     */
+    protected void retrieveAndProcessData() {
+        retrieveAndProcessMeasurementData();
+        if (config.apiVersion > 1) {
+            retrieveAndProcessSystemData();
+        }
+    }
+
+    /**
+     * Retrieve and process the measurement data obtained via the recent measurement api.
+     */
+    protected void retrieveAndProcessMeasurementData() {
+        final String measurementData;
+
+        try {
+            measurementData = retrieveMeasurementData();
+        } catch (Exception e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                    String.format("Device is offline or doesn't support the API version"));
+            return;
+        }
+
+        processMeasurementData(measurementData);
+    }
+
+    /**
+     * Retrieve and process the system data via the system api.
+     */
+    protected void retrieveAndProcessSystemData() {
+        final String systemData;
+
+        try {
+            systemData = retrieveSystemData();
+        } catch (Exception e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                    String.format("Device is offline or doesn't support the API version"));
+            return;
+        }
+
+        processSystemData(systemData);
     }
 
     /**
@@ -217,7 +237,14 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
         updateState(groupID + "#" + channelID, state);
     }
 
-    protected void handleSystemDataPayload(String data) {
+    /**
+     * Device specific handling of the returned data.
+     *
+     * @param payload The data obtained form the API call
+     */
+    protected abstract void processMeasurementData(String data);
+
+    protected void processSystemData(String data) {
         var payload = gson.fromJson(data, HomeWizardSystemPayload.class);
         if (payload != null) {
 
@@ -233,31 +260,62 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
         }
     }
 
-    /**
-     * Device specific handling of the returned data.
-     *
-     * @param payload The data obtained form the API call
-     */
-    protected abstract void handleMeasurementDataPayload(String data);
-
-    protected ContentResponse getResponseFrom(String url)
+    @SuppressWarnings("null")
+    protected @Nullable ContentResponse getResponseFrom(String url)
             throws InterruptedException, TimeoutException, ExecutionException {
-        var request = httpClient.newRequest(url);
+        if (httpClient == null) {
+            httpClient = new HttpClient();
+            if (config.apiVersion > 1) {
+                String caCertPath = "homewizard-ca-cert.pem";
 
-        if (config.apiVersion > 1) {
-            request = request.header("Authorization", "Bearer " + config.bearerToken);
-            request = request.header("X-Api-Version", "" + config.apiVersion);
+                // Create an SSL context factory and set the CA certificate
+                KeyStore keyStore = null;
+                ClassLoader classloader = this.getClass().getClassLoader();
+                if (classloader != null) {
+                    try {
+                        keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                        keyStore.load(null, null);
+                        keyStore.setCertificateEntry("caCert", CertificateFactory.getInstance("X.509")
+                                .generateCertificate(classloader.getResourceAsStream(caCertPath)));
+                    } catch (Exception ex) {
+                    }
+
+                    SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
+                    sslContextFactory.setTrustStore(keyStore);
+                    sslContextFactory.setEndpointIdentificationAlgorithm(null);
+                    sslContextFactory.setHostnameVerifier((hostname, sslSession) -> true);
+                    httpClient = new HttpClient(sslContextFactory);
+                }
+            }
         }
-        return request.send();
+
+        try {
+            httpClient.setConnectTimeout(30000);
+            httpClient.start();
+            var request = httpClient.newRequest(url);
+
+            if (config.apiVersion > 1) {
+                request = request.header("Authorization", "Bearer " + config.bearerToken);
+                request = request.header("X-Api-Version", "" + config.apiVersion);
+            }
+            return request.send();
+        } catch (Exception ex) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                    String.format("Unable to communicate with the device: %s", ex.getMessage()));
+            return null;
+        }
     }
 
     /**
      * @return json response from the device information api
      * @throws InterruptedException, TimeoutException, ExecutionException, SecurityException
      */
-    public String getDeviceInformationData()
+    public String retrieveDeviceInformationData()
             throws InterruptedException, TimeoutException, ExecutionException, SecurityException {
         var response = getResponseFrom(apiURL);
+        if (response == null) {
+            return "";
+        }
         if (response.getStatus() == 401) {
             throw new SecurityException("Bearer token is invalid.");
         }
@@ -268,62 +326,31 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
      * @return json response from the measurement api
      * @throws InterruptedException, TimeoutException, ExecutionException
      */
-    public String getMeasurementData() throws InterruptedException, TimeoutException, ExecutionException {
+    public String retrieveMeasurementData() throws InterruptedException, TimeoutException, ExecutionException {
         var url = apiURL;
         if (config.apiVersion > 1) {
             url += "measurement";
         } else {
             url += "v1/data";
         }
-
-        return getResponseFrom(url).getContentAsString();
+        var response = getResponseFrom(url);
+        if (response != null) {
+            return response.getContentAsString();
+        } else {
+            return "";
+        }
     }
 
     /**
      * @return json response from the system api
      * @throws InterruptedException, TimeoutException, ExecutionException
      */
-    public String getSystemData() throws InterruptedException, TimeoutException, ExecutionException {
-        return getResponseFrom(apiURL + "system").getContentAsString();
-    }
-
-    protected void pollMeasurementData() {
-        final String measurementData;
-
-        try {
-            measurementData = getMeasurementData();
-        } catch (Exception e) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                    String.format("Device is offline or doesn't support the API version"));
-            return;
-        }
-
-        updateStatus(ThingStatus.ONLINE);
-        handleMeasurementDataPayload(measurementData);
-    }
-
-    protected void pollSystemData() {
-        final String systemData;
-
-        try {
-            systemData = getSystemData();
-        } catch (Exception e) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                    String.format("Device is offline or doesn't support the API version"));
-            return;
-        }
-
-        updateStatus(ThingStatus.ONLINE);
-        handleSystemDataPayload(systemData);
-    }
-
-    /**
-     * The actual polling loop
-     */
-    protected void pollingCode() {
-        pollMeasurementData();
-        if (config.apiVersion > 1) {
-            pollSystemData();
+    public String retrieveSystemData() throws InterruptedException, TimeoutException, ExecutionException {
+        var response = getResponseFrom(apiURL + "system");
+        if (response != null) {
+            return response.getContentAsString();
+        } else {
+            return "";
         }
     }
 }

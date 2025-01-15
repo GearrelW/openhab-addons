@@ -53,7 +53,7 @@ public class HomeWizardEnergySocketHandlerTest extends HomeWizardHandlerTest {
                     new ThingUID(HomeWizardBindingConstants.THING_TYPE_HWE_SKT, "homewizard-test-thing-skt"));
             when(thing.getThingTypeUID()).thenReturn(HomeWizardBindingConstants.THING_TYPE_HWE_SKT);
         }
-        when(thing.getConfiguration()).thenReturn(CONFIG);
+        when(thing.getConfiguration()).thenReturn(CONFIG_V1);
 
         final List<Channel> channelList = Arrays.asList(
                 mockChannel(thing.getUID(), HomeWizardBindingConstants.CHANNEL_GROUP_ENERGY,
@@ -95,9 +95,10 @@ public class HomeWizardEnergySocketHandlerTest extends HomeWizardHandlerTest {
 
         try {
             doReturn(DataUtil.fromFile("response-device-information-energy-socket.json")).when(handler)
-                    .getDeviceInformationData();
-            doReturn(DataUtil.fromFile("response-measurement-energy-socket.json")).when(handler).getMeasurementData();
-            doReturn(DataUtil.fromFile("response-state-energy-socket.json")).when(handler).getStateData();
+                    .retrieveDeviceInformationData();
+            doReturn(DataUtil.fromFile("response-measurement-energy-socket.json")).when(handler)
+                    .retrieveMeasurementData();
+            doReturn(DataUtil.fromFile("response-state-energy-socket.json")).when(handler).retrieveStateData();
         } catch (Exception e) {
             assertFalse(true);
         }

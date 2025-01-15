@@ -57,19 +57,20 @@ public abstract class HomeWizardEnergySocketStateHandler extends HomeWizardEnerg
      * @return json response from the state api
      * @throws IOException
      */
-    public String getStateData() throws Exception {
-        if (config.apiVersion > 1) {
-            return getResponseFrom(apiURL + "v1/state").getContentAsString();
-        } else {
-            return getResponseFrom(apiURL + "v1/state").getContentAsString();
+    public String retrieveStateData() throws Exception {
+        var response = getResponseFrom(apiURL + "v1/state");
+        if (response == null) {
+            return "";
         }
+
+        return response.getContentAsString();
     }
 
     protected void pollState() {
         final String stateResult;
 
         try {
-            stateResult = getStateData();
+            stateResult = retrieveStateData();
         } catch (Exception ex) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                     String.format("Unable to query device state: %s", ex.getMessage()));
@@ -111,8 +112,8 @@ public abstract class HomeWizardEnergySocketStateHandler extends HomeWizardEnerg
      * This overrides the original polling loop by including a request for the current state..
      */
     @Override
-    protected void pollingCode() {
-        super.pollingCode();
+    protected void retrieveAndProcessData() {
+        super.retrieveAndProcessData();
         pollState();
     }
 }

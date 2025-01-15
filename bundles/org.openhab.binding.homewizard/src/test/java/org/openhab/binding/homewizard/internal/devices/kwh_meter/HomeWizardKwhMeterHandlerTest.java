@@ -45,7 +45,7 @@ public class HomeWizardKwhMeterHandlerTest extends HomeWizardHandlerTest {
         when(thing.getUID())
                 .thenReturn(new ThingUID(HomeWizardBindingConstants.THING_TYPE_HWE_SKT, "homewizard-test-thing-skt"));
         when(thing.getThingTypeUID()).thenReturn(HomeWizardBindingConstants.THING_TYPE_HWE_KWH);
-        when(thing.getConfiguration()).thenReturn(CONFIG);
+        when(thing.getConfiguration()).thenReturn(CONFIG_V1);
 
         final List<Channel> channelList = Arrays.asList(
                 mockChannel(thing.getUID(), HomeWizardBindingConstants.CHANNEL_GROUP_ENERGY,
@@ -93,8 +93,8 @@ public class HomeWizardKwhMeterHandlerTest extends HomeWizardHandlerTest {
 
         try {
             doReturn(DataUtil.fromFile("response-device-information-kwh3-meter.json")).when(handler)
-                    .getDeviceInformationData();
-            doReturn(DataUtil.fromFile("response-measurement-kwh-meter.json")).when(handler).getMeasurementData();
+                    .retrieveDeviceInformationData();
+            doReturn(DataUtil.fromFile("response-measurement-kwh-meter.json")).when(handler).retrieveMeasurementData();
         } catch (Exception e) {
             assertFalse(true);
         }

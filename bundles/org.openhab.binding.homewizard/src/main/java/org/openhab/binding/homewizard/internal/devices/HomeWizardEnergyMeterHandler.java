@@ -32,7 +32,7 @@ public class HomeWizardEnergyMeterHandler extends HomeWizardDeviceHandler {
      * Constructor
      *
      * @param thing The thing to handle
-     * @param timeZoneProvider The TimeZoneProvider
+     *
      */
     public HomeWizardEnergyMeterHandler(Thing thing) {
         super(thing);
@@ -51,7 +51,7 @@ public class HomeWizardEnergyMeterHandler extends HomeWizardDeviceHandler {
      * @param data The data obtained form the API call
      */
     @Override
-    protected void handleMeasurementDataPayload(String data) {
+    protected void processMeasurementData(String data) {
         var payload = gson.fromJson(data, HomeWizardEnergyMeterMeasurementPayload.class);
         if (payload != null) {
             if (!thing.getThingTypeUID().equals(HomeWizardBindingConstants.THING_TYPE_P1_METER)

@@ -66,8 +66,8 @@ public class HomeWizardP1MeterHandler extends HomeWizardEnergyMeterHandler {
      */
     @SuppressWarnings("null")
     @Override
-    protected void handleMeasurementDataPayload(String data) {
-        super.handleMeasurementDataPayload(data);
+    protected void processMeasurementData(String data) {
+        super.processMeasurementData(data);
 
         var payload = gson.fromJson(data, HomeWizardP1MeterMeasurementPayload.class);
 

@@ -75,8 +75,10 @@ public class HomeWizardPlugInBatteryMeterHandlerTest extends HomeWizardHandlerTe
 
         try {
             doReturn(DataUtil.fromFile("response-device-information-plug-in-battery.json")).when(handler)
-                    .getDeviceInformationData();
-            doReturn(DataUtil.fromFile("response-measurement-plug-in-battery.json")).when(handler).getMeasurementData();
+                    .retrieveDeviceInformationData();
+            doReturn(DataUtil.fromFile("response-measurement-plug-in-battery.json")).when(handler)
+                    .retrieveMeasurementData();
+            doReturn(DataUtil.fromFile("response-system.json")).when(handler).retrieveSystemData();
         } catch (Exception e) {
             assertFalse(true);
         }

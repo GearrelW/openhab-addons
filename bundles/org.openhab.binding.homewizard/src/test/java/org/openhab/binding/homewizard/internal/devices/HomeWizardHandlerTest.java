@@ -23,6 +23,7 @@ import org.openhab.core.config.core.Configuration;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
@@ -38,11 +39,14 @@ import org.openhab.core.types.State;
 @NonNullByDefault
 public class HomeWizardHandlerTest {
 
-    protected static final Configuration CONFIG = createConfig();
+    protected static final Configuration CONFIG = createConfig(2);
+    protected static final Configuration CONFIG_V1 = createConfig(1);
 
-    protected static Configuration createConfig() {
+    protected static Configuration createConfig(int apiVersion) {
         final Configuration config = new Configuration();
         config.put("ipAddress", "192.168.1.1");
+        config.put("apiVersion", apiVersion);
+        config.put("bearerToken", "token");
         return config;
     }
 
@@ -56,6 +60,10 @@ public class HomeWizardHandlerTest {
         final Channel channel = Mockito.mock(Channel.class);
         when(channel.getUID()).thenReturn(new ChannelUID(thingId, groupId + "#" + channelId));
         return channel;
+    }
+
+    protected static State getState(final String input) {
+        return new StringType(input);
     }
 
     protected static State getState(final int input) {

@@ -125,8 +125,8 @@ public class HomeWizardEnergySocketHandler extends HomeWizardEnergySocketStateHa
      * @param data The data obtained from the API call
      */
     @Override
-    protected void handleMeasurementDataPayload(String data) {
-        super.handleMeasurementDataPayload(data);
+    protected void processMeasurementData(String data) {
+        super.processMeasurementData(data);
 
         var payload = gson.fromJson(data, HomeWizardEnergySocketMeasurementPayload.class);
         if (payload != null) {

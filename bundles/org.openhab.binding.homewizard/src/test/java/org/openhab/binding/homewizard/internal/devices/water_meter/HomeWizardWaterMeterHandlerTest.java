@@ -98,8 +98,9 @@ public class HomeWizardWaterMeterHandlerTest {
 
         try {
             doReturn(DataUtil.fromFile("response-device-information-water-meter.json")).when(handler)
-                    .getDeviceInformationData();
-            doReturn(DataUtil.fromFile("response-measurement-water-meter.json")).when(handler).getMeasurementData();
+                    .retrieveDeviceInformationData();
+            doReturn(DataUtil.fromFile("response-measurement-water-meter.json")).when(handler)
+                    .retrieveMeasurementData();
         } catch (Exception e) {
             assertFalse(true);
         }
