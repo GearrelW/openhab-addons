@@ -227,7 +227,7 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
 
     /**
      *
-     * Updates the state of the thing.
+     * Updates the state of a channel.
      *
      * @param groupID id of the channel, which was updated
      * @param channelID id of the channel, which was updated
@@ -240,7 +240,7 @@ public abstract class HomeWizardDeviceHandler extends BaseThingHandler {
     /**
      * Device specific handling of the returned data.
      *
-     * @param payload The data obtained form the API call
+     * @param data The data obtained form the API call
      */
     protected abstract void processMeasurementData(String data);
 
