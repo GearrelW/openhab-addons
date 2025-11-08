@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="intergas_gateway"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<thing-type id="intergas_xtend">
+		<!-- Comment this in for Things which need a Bridge to function.
+			<supported-bridge-type-refs>
+			<bridge-type-ref id="Intergas_GatewayBridge" />
+			</supported-bridge-type-refs>
+		-->
+
+		<label>Intergas_Gateway Binding Thing</label>
+		<description>Sample thing for Intergas_Gateway Binding</description>
+
+		<channels>
+			<channel id="room_temperature" typeId="channel-temperature"/>
+			<channel id="room_setpoint" typeId="channel-set-point"/>
+			<channel id="heating" typeId="channel-heating"/>
+			<channel id="cop" typeId="channel-cop"/>
+			<channel id="total" typeId="channel-total"/>
+			<channel id="heatpump" typeId="channel-heatpump"/>
+			<channel id="cv" typeId="channel-cv"/>
+		</channels>
+
+		<config-description>
+			<parameter name="intergasGateway" type="text" required="true">
+				<context>network-address</context>
+				<label>Intergas Gateway</label>
+				<description>Hostname or IP address of the device</description>
+			</parameter>
+			<parameter name="xtendGateway" type="text" required="true">
+                <context>network-address</context>
+                <label>Xtend Gateway</label>
+                <description>Hostname or IP address of the device</description>
+            </parameter>
+			<parameter name="refreshInterval" type="integer" unit="s" min="1">
+				<label>Refresh Interval</label>
+				<description>Interval the device is polled in sec.</description>
+				<default>30</default>
+				<advanced>true</advanced>
+			</parameter>
+		</config-description>
+	</thing-type>
+
+	<!-- Sample Channel Type -->
+	<channel-type id="channel-temperature">
+		<item-type>Number:Temperature</item-type>
+		<label>Room Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Room Temperature</description>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+	<channel-type id="channel-set-point">
+        <item-type>Number:Temperature</item-type>
+        <label>Set Point Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Set Point Temperature</description>
+        <state readOnly="true" pattern="%.1f %unit%"/>
+    </channel-type>
+    <channel-type id="channel-heating">
+        <item-type>Switch</item-type>
+        <label>Heatpump On</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Heatpump On</description>
+    </channel-type>
+    <channel-type id="channel-cop">
+        <item-type>Number:Dimensionless</item-type>
+        <label>Heatpump COP</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Heatpump COP</description>
+        <state readOnly="true" pattern="%.1f"/>
+    </channel-type>
+    <channel-type id="channel-total">
+        <item-type>Number:Power</item-type>
+        <label>Total</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Total Thermal Power</description>
+    </channel-type>
+    <channel-type id="channel-heatpump">
+        <item-type>Number:Power</item-type>
+        <label>Warmtepomp</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Heatpump Thermal Power</description>
+    </channel-type>
+    <channel-type id="channel-cv">
+        <item-type>Number:Power</item-type>
+        <label>CV Ketel</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>CV Thermal Power</description>
+    </channel-type>
+</thing:thing-descriptions>
