@@ -111,6 +111,7 @@ public class EneVerHandler extends BaseThingHandler {
                 updateStatus(ThingStatus.OFFLINE);
             }
             var now = LocalDateTime.now();
+            retrieveElectricityPrices(LocalDate.now().plusDays(1));
 
             // update channels
             determineCheapAndExpensiveHours();
@@ -175,23 +176,18 @@ public class EneVerHandler extends BaseThingHandler {
             return false;
         }
 
-        if (payload.getStatus()) {
-            ePrices.remove(date);
-            averagePrices.remove(date);
+        if (payload.getStatus() && payload.getDate().isEqual(date)) {
+            ePrices.put(date, new Hashtable<Integer, Double>());
+            averagePrices.put(date, 0.0);
 
             payload.getPrices().forEach((price) -> {
-                if (!ePrices.containsKey(price.getDatum())) {
-                    ePrices.put(price.getDatum(), new Hashtable<Integer, Double>());
-                }
-                ePrices.get(price.getDatum()).put(price.getDatumTijd().getHour(), price.getPrijs());
+                ePrices.get(date).put(price.getDatumTijd().getHour(), price.getPrijs());
 
-                if (!averagePrices.containsKey(price.getDatum())) {
-                    averagePrices.put(price.getDatum(), 0.0);
-                }
-                averagePrices.put(price.getDatum(), averagePrices.get(price.getDatum()) + price.getPrijs());
+                averagePrices.put(date, averagePrices.get(date) + price.getPrijs());
+
             });
 
-            averagePrices.forEach((datum, avg) -> averagePrices.put(datum, avg / 24));
+            averagePrices.put(date, averagePrices.get(date) / ePrices.get(date).size());
 
             var yesterday = today.minusDays(1);
             ePrices.remove(yesterday);

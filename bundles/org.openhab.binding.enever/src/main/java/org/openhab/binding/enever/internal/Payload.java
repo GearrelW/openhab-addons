@@ -12,6 +12,7 @@
  */
 package org.openhab.binding.enever.internal;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,10 @@ public class Payload {
 
     public boolean getStatus() {
         return status;
+    }
+
+    public LocalDate getDate() {
+        return prices.getFirst().getDatum();
     }
 
     public void setStatus(boolean status) {
