@@ -58,7 +58,6 @@ public class XtendActions implements ThingActions {
             HttpUtil.executeUrl("GET", url, 30000);
         } catch (IOException e) {
         }
-
     }
 
     public static void setPrices(ThingActions actions, int gasPrice, int electricityPrice) {

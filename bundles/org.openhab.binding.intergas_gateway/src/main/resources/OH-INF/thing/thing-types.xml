@@ -32,10 +32,10 @@
 				<description>Hostname or IP address of the device</description>
 			</parameter>
 			<parameter name="xtendGateway" type="text" required="true">
-                <context>network-address</context>
-                <label>Xtend Gateway</label>
-                <description>Hostname or IP address of the device</description>
-            </parameter>
+				<context>network-address</context>
+				<label>Xtend Gateway</label>
+				<description>Hostname or IP address of the device</description>
+			</parameter>
 			<parameter name="refreshInterval" type="integer" unit="s" min="1">
 				<label>Refresh Interval</label>
 				<description>Interval the device is polled in sec.</description>
@@ -53,35 +53,35 @@
 		<state readOnly="true" pattern="%.1f %unit%"/>
 	</channel-type>
 	<channel-type id="channel-set-point">
-        <item-type>Number:Temperature</item-type>
-        <label>Set Point Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Set Point Temperature</description>
-        <state readOnly="true" pattern="%.1f %unit%"/>
-    </channel-type>
-    <channel-type id="channel-heating">
-        <item-type>Switch</item-type>
-        <label>Heatpump On</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Heatpump On</description>
-    </channel-type>
-    <channel-type id="channel-cop">
-        <item-type>Number:Dimensionless</item-type>
-        <label>Heatpump COP</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Heatpump COP</description>
-        <state readOnly="true" pattern="%.1f"/>
-    </channel-type>
-    <channel-type id="channel-total">
-        <item-type>Number:Power</item-type>
-        <label>Total</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Total Thermal Power</description>
-    </channel-type>
-    <channel-type id="channel-heatpump">
-        <item-type>Number:Power</item-type>
-        <label>Warmtepomp</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Heatpump Thermal Power</description>
-    </channel-type>
-    <channel-type id="channel-cv">
-        <item-type>Number:Power</item-type>
-        <label>CV Ketel</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>CV Thermal Power</description>
-    </channel-type>
+		<item-type>Number:Temperature</item-type>
+		<label>Set Point Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Set Point Temperature</description>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+	<channel-type id="channel-heating">
+		<item-type>Switch</item-type>
+		<label>Heatpump On</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Heatpump On</description>
+	</channel-type>
+	<channel-type id="channel-cop">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Heatpump COP</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Heatpump COP</description>
+		<state readOnly="true" pattern="%.1f"/>
+	</channel-type>
+	<channel-type id="channel-total">
+		<item-type>Number:Power</item-type>
+		<label>Total</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Total Thermal Power</description>
+	</channel-type>
+	<channel-type id="channel-heatpump">
+		<item-type>Number:Power</item-type>
+		<label>Warmtepomp</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Heatpump Thermal Power</description>
+	</channel-type>
+	<channel-type id="channel-cv">
+		<item-type>Number:Power</item-type>
+		<label>CV Ketel</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>CV Thermal Power</description>
+	</channel-type>
 </thing:thing-descriptions>

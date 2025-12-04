@@ -14,7 +14,7 @@ package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -38,8 +38,7 @@ public class PayloadPriceItem {
 
     public LocalDateTime getDatumTijd() {
         try {
-            return LocalDateTime.parse(datum, DateTimeFormatter.ofPattern("yyy-MM-dd HH:mm:ss")).withMinute(0)
-                    .withSecond(0).withSecond(0);
+            return ZonedDateTime.parse(datum).withMinute(0).withSecond(0).withSecond(0).toLocalDateTime();
         } catch (DateTimeParseException ex) {
             return LocalDateTime.MIN.withMinute(0).withSecond(0).withSecond(0);
         }
@@ -49,10 +48,6 @@ public class PayloadPriceItem {
         return getDatumTijd().toLocalDate();
     }
 
-    // public LocalTime getTime() {
-    // return getDatum().toLocalTime();
-    // }
-
     public Double getPrijs() {
         try {
             return Double.parseDouble(prijs);
@@ -60,5 +55,4 @@ public class PayloadPriceItem {
             return 0.0;
         }
     }
-
 }

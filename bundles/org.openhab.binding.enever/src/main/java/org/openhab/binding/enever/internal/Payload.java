@@ -49,5 +49,4 @@ public class Payload {
     public List<PayloadPriceItem> getPrices() {
         return prices;
     }
-
 }

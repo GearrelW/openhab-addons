@@ -12,63 +12,63 @@
 
 		<channels>
 			<channel id="electricity-price" typeId="channel-price">
-			    <label>Hourly Electricity Price</label>
-                <description>This channel provides the hourly electricity price</description>
+				<label>Hourly Electricity Price</label>
+				<description>This channel provides the hourly electricity price</description>
 			</channel>
 			<channel id="average-electricity-price" typeId="channel-price">
-			    <label>Average Electricity Price</label>
-                <description>This channel provides the average electricity price</description>
+				<label>Average Electricity Price</label>
+				<description>This channel provides the average electricity price</description>
 			</channel>
 			<channel id="gas-price" typeId="channel-price">
-			    <label>Daily Gas Price</label>
-                <description>This channel provides the daily gas price</description>
+				<label>Daily Gas Price</label>
+				<description>This channel provides the daily gas price</description>
 			</channel>
 			<channel id="indication-hour" typeId="channel-indication">
-			    <label>Cheap/Expensive hours</label>
-                <description>Indicates cheap, expensive and normal hours. 0 - Normal, 1 - Cheap, -1 - Expensive</description>
+				<label>Cheap/Expensive hours</label>
+				<description>Indicates cheap, expensive and normal hours. 0 - Normal, 1 - Cheap, -1 - Expensive</description>
 			</channel>
 			<channel id="warning-hour" typeId="channel-warning">
-                <label>High price warning</label>
-                <description>Warning when the electricity price will be high after the configured hours</description>
-            </channel>	
-            <channel id="peak-hour" typeId="channel-peak">
-                <label>Peak price Hour</label>
-                <description>Hour with the highest price for the day</description>
-            </channel>
+				<label>High price warning</label>
+				<description>Warning when the electricity price will be high after the configured hours</description>
+			</channel>
+			<channel id="peak-hour" typeId="channel-peak">
+				<label>Peak price Hour</label>
+				<description>Hour with the highest price for the day</description>
+			</channel>
 		</channels>
 		<properties>
-            <property name="thingTypeVersion">1</property>
-        </properties>
+			<property name="thingTypeVersion">1</property>
+		</properties>
 
 		<config-description>
 			<parameter name="token" type="text" required="true">
-                <label>Token</label>
-                <description>Token</description>
-            </parameter>
-            <parameter name="numberOfHours" type="integer" required="true">
-                <label>Number of hours</label>
-                <description>Number of cheap/expensive hours</description>
-            </parameter>
-            <parameter name="priceTreshold" type="integer" required="false">
-                <label>Treshold (%) for cheap/expensive hours</label>
-                <description>Treshold in percentage of the average hour</description>
-            </parameter>
-            <parameter name="numberOfHoursBeforeWarning" type="integer" required="false">
-                <label>Number of hours before warning</label>
-                <description>Number of hours before peak electricity warning</description>
-            </parameter>
-            <parameter name="warningTreshold" type="integer" required="false">
-                <label>Treshold (%) for peak electricity</label>
-                <description>Treshold in percentage for the peak electricity price</description>
-            </parameter>
-            <parameter name="excludeNightlyHours" type="boolean" required="false">
-                <label>Exclude nightly hours</label>
-                <description>Exclude nightly hour between 0:00 and 5:00</description>
-            </parameter>
-            <parameter name="debug" type="boolean" required="false">
-                <label>Debug mode</label>
-                <description>Debug mode</description>
-            </parameter>
+				<label>Token</label>
+				<description>Token</description>
+			</parameter>
+			<parameter name="numberOfHours" type="integer" required="true">
+				<label>Number of hours</label>
+				<description>Number of cheap/expensive hours</description>
+			</parameter>
+			<parameter name="priceTreshold" type="integer" required="false">
+				<label>Treshold (%) for cheap/expensive hours</label>
+				<description>Treshold in percentage of the average hour</description>
+			</parameter>
+			<parameter name="numberOfHoursBeforeWarning" type="integer" required="false">
+				<label>Number of hours before warning</label>
+				<description>Number of hours before peak electricity warning</description>
+			</parameter>
+			<parameter name="warningTreshold" type="integer" required="false">
+				<label>Treshold (%) for peak electricity</label>
+				<description>Treshold in percentage for the peak electricity price</description>
+			</parameter>
+			<parameter name="excludeNightlyHours" type="boolean" required="false">
+				<label>Exclude nightly hours</label>
+				<description>Exclude nightly hour between 0:00 and 5:00</description>
+			</parameter>
+			<parameter name="debug" type="boolean" required="false">
+				<label>Debug mode</label>
+				<description>Debug mode</description>
+			</parameter>
 		</config-description>
 	</thing-type>
 
@@ -80,21 +80,21 @@
 		<state pattern="%.2f" readOnly="true"></state>
 	</channel-type>
 	<channel-type id="channel-indication">
-        <item-type>Number</item-type>
-        <label>Indication</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Cheap of expensive hour</description>
-        <state readOnly="true"></state>
-    </channel-type>
-    <channel-type id="channel-warning">
-        <item-type>Switch</item-type>
-        <label>Warning</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Price warning</description>
-        <state readOnly="true"></state>
-    </channel-type>
-    <channel-type id="channel-peak">
-        <item-type>Number</item-type>
-        <label>Peak hour</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-        <description>Peak Hour</description>
-        <state readOnly="true"></state>
-    </channel-type>
+		<item-type>Number</item-type>
+		<label>Indication</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Cheap of expensive hour</description>
+		<state readOnly="true"></state>
+	</channel-type>
+	<channel-type id="channel-warning">
+		<item-type>Switch</item-type>
+		<label>Warning</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Price warning</description>
+		<state readOnly="true"></state>
+	</channel-type>
+	<channel-type id="channel-peak">
+		<item-type>Number</item-type>
+		<label>Peak hour</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Peak Hour</description>
+		<state readOnly="true"></state>
+	</channel-type>
 </thing:thing-descriptions>

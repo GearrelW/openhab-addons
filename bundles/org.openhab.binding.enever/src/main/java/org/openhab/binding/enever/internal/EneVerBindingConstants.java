@@ -36,5 +36,4 @@ public class EneVerBindingConstants {
     public static final String CHANNEL_HOUR_INDICATION = "indication-hour";
     public static final String CHANNEL_PRICE_WARNING = "warning-hour";
     public static final String CHANNEL_PEAK_HOUR = "peak-hour";
-
 }
