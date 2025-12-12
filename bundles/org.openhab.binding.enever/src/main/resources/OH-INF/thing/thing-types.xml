@@ -19,7 +19,7 @@
 				<label>Hourly Electricity Price + 1</label>
 				<description>This channel provides the hourly electricity price</description>
 			</channel>
-			<channel id="electricity-price" typeId="channel-price">
+			<channel id="electricity-price-plus-2" typeId="channel-price">
 				<label>Hourly Electricity Price + 2</label>
 				<description>This channel provides the hourly electricity price</description>
 			</channel>

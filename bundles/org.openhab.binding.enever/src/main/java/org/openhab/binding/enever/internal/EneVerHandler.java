@@ -271,9 +271,11 @@ public class EneVerHandler extends BaseThingHandler {
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(prijs.getPrijs()));
             prijs = ePrices.getPriceFor(now.plusHours(1));
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1, new DecimalType(prijs.getPrijs()));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1,
+                    new DecimalType(prijs.getPrijs()));
             prijs = ePrices.getPriceFor(now.plusHours(2));
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2, new DecimalType(prijs.getPrijs()));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2,
+                    new DecimalType(prijs.getPrijs()));
 
             if (prijs.isGoedkoop) {
                 updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("cheap"));

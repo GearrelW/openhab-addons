@@ -98,8 +98,9 @@ public class EPrices {
     private void processPrices() {
         averagePrices = allPrices.stream()
                 .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)));
-        var dates = allPrices.stream().filter(ep -> ep.getStatus().isEmpty()).map(EPrice::getDatum).distinct().collect(Collectors.toList());
-        
+        var dates = allPrices.stream().filter(ep -> ep.getStatus().isEmpty()).map(EPrice::getDatum).distinct()
+                .collect(Collectors.toList());
+
         setStatus(dates);
 
         allPrices.removeIf(ep -> ep.getDatum().isBefore(LocalDate.now()));
