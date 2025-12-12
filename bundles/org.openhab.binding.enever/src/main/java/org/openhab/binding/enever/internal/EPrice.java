@@ -17,11 +17,17 @@ import java.time.LocalDateTime;
 
 public class EPrice implements Comparable<EPrice> {
 
+    protected static final String ZERO = "zero";
+    protected static final String STANDBY = "standby";
+    protected static final String TO_FULL = "to_full";
+    protected static final String ZERO_DISCHARGE = "zero_discharge_only";
+    protected static final String ZERO_CHARGE = "zero_charge_only";
+
     private LocalDateTime datum = LocalDateTime.now();
 
     private Double prijs = 0.0;
 
-    public String status = "";
+    public String status = ZERO;
 
     public Boolean isDuur = false;
     public Boolean isGoedkoop = false;
@@ -50,11 +56,11 @@ public class EPrice implements Comparable<EPrice> {
 
     @Override
     public String toString() {
-        return "[" + this.datum + " : " + this.prijs + "]";
+        return "[" + this.getDatum() + " " + this.getUur() + " : " + this.prijs + "(s=" + status + ")]\n";
     }
 
     @Override
     public int compareTo(EPrice o) {
-        return this.prijs.compareTo(o.prijs);
+        return this.datum.compareTo(o.datum);
     }
 }
