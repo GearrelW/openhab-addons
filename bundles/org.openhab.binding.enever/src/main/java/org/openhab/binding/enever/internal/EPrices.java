@@ -14,6 +14,7 @@ package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -74,87 +75,137 @@ public class EPrices {
                 .collect(Collectors.toList());
     }
 
-    private void initStatus() {
-        allPrices.stream().forEach(ep -> {
-            Double avgPrice = averagePrices.get(ep.getDatum());
-            if (ep.getPrijs() <= avgPrice) {
-                ep.status = EPrice.ZERO_CHARGE;
-            } else {
-                ep.status = EPrice.ZERO_DISCHARGE;
-            }
+    private void initStatus(List<LocalDate> dates) {
+        dates.forEach(date -> {
+            var avgPrice = averagePrices.get(date);
+            allPrices.stream().filter(ep -> ep.getDatum().equals(date)).forEach(ep -> {
+                if (ep.getPrijs() <= avgPrice) {
+                    ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
+                } else {
+                    ep.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
+                }
 
-            if (ep.getPrijs() <= (avgPrice * (1 - treshold))) {
-                ep.isGoedkoop = true;
-            }
-            if (ep.getPrijs() > (avgPrice * (1 + treshold))) {
-                ep.isDuur = true;
-            }
+                if (ep.getPrijs() <= (avgPrice * (1 - treshold))) {
+                    ep.isGoedkoop = true;
+                }
+                if (ep.getPrijs() > (avgPrice * (1 + treshold))) {
+                    ep.isDuur = true;
+                }
+            });
         });
     }
 
     private void processPrices() {
         averagePrices = allPrices.stream()
                 .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)));
-
-        setStatus();
+        var dates = allPrices.stream().filter(ep -> ep.getStatus().isEmpty()).map(EPrice::getDatum).distinct().collect(Collectors.toList());
+        
+        setStatus(dates);
 
         allPrices.removeIf(ep -> ep.getDatum().isBefore(LocalDate.now()));
         averagePrices.keySet().removeIf(d -> d.isBefore(LocalDate.now()));
     }
 
-    private void setStatus() {
-        var dates = allPrices.stream().map(EPrice::getDatum).distinct().collect(Collectors.toList());
-
+    private void setStatus(List<LocalDate> dates) {
+        initStatus(dates);
         dates.forEach(date -> {
-            logger.error("Processing date: " + date.toString());
-            var low = allPrices.stream().filter(ep -> ep.getDatum().equals(date) && ep.isGoedkoop).limit(numberOfHours)
-                    .collect(Collectors.toList());
-            var high = allPrices.stream().filter(ep -> ep.getDatum().equals(date) && ep.isDuur).limit(numberOfHours)
-                    .collect(Collectors.toList());
-
-            if (high.isEmpty() || low.isEmpty()) {
-                initStatus();
-                return;
+            var winter = (date.getMonthValue() > 10 || date.getMonthValue() < 3);
+            if (winter) {
+                setWinterStatus(date);
+            } else {
+                setSummerStatus(date);
             }
+        });
+        logger.error("prices " + allPrices.toString());
+    }
 
-            allPrices.stream().filter(ep -> ep.getDatum().equals(date)).forEach(ep -> ep.status = EPrice.STANDBY);
+    private void setWinterStatus(LocalDate date) {
+        var myPrices = allPrices.stream().filter(ep -> ep.getDatum().equals(date)).collect(Collectors.toList());
 
-            low.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
-            high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
+        var low = myPrices.stream().filter(ep -> ep.isGoedkoop)
+                .sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
+                .collect(Collectors.toList());
+        var high = myPrices.stream().filter(ep -> ep.isDuur)
+                .sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
+                .collect(Collectors.toList());
 
-            high.forEach(h -> {
-                low.stream().filter(l -> !l.status.equals(EPrice.TO_FULL) && l.getUur() < h.getUur()
-                        && h.getPrijs() >= l.getPrijs() + 0.15).findFirst().ifPresent(l -> {
-                            l.status = EPrice.TO_FULL;
-                            h.status = EPrice.ZERO_DISCHARGE;
-                        });
-            });
+        if (high.isEmpty() || low.isEmpty()) {
+            return;
+        }
+        myPrices.stream().forEach(ep -> ep.setStatus(EPrice.STANDBY));
 
-            var full = allPrices.stream().filter(l -> l.status.equals(EPrice.TO_FULL)).collect(Collectors.toList());
-            var charge = allPrices.stream().filter(l -> l.status.equals(EPrice.ZERO_DISCHARGE))
-                    .collect(Collectors.toList());
+        low.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
+        high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
 
-            if (full.isEmpty()) {
-                initStatus();
-                return;
-            }
-
-            var firstToFull = full.getFirst().getUur();
-            var lastToFull = full.getLast().getUur();
-
-            var firstToCharge = charge.getFirst().getUur();
-            var lastToCharge = charge.getLast().getUur();
-
-            allPrices.stream().filter(ep -> ep.getDatum().equals(date)).forEach(ep -> {
-                if (ep.getUur() > lastToFull && ep.getUur() < firstToCharge) {
-                    ep.status = EPrice.ZERO_CHARGE;
-                }
-                if (ep.getUur() < firstToFull || ep.getUur() > lastToCharge) {
-                    ep.status = EPrice.ZERO_DISCHARGE;
-                }
-            });
+        high.forEach(h -> {
+            low.stream().filter(l -> !l.getStatus().equals(EPrice.TO_FULL) && l.getUur() < h.getUur()
+                    && h.getPrijs() >= l.getPrijs() + 0.15).findFirst().ifPresent(l -> {
+                        l.setStatus(EPrice.TO_FULL);
+                        h.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
+                    });
         });
 
-        logger.info("pr: " + allPrices.toString());
+        var full = allPrices.stream().filter(l -> l.getDatum().equals(date) && l.getStatus().equals(EPrice.TO_FULL))
+                .collect(Collectors.toList());
+        var discharge = allPrices.stream().filter(l -> l.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
+                .collect(Collectors.toList());
+
+        if (full.isEmpty()) {
+            initStatus(Collections.singletonList(date));
+            return;
+        }
+
+        var firstToFull = full.getFirst().getUur();
+        var lastToFull = full.getLast().getUur();
+
+        var firstToDischarge = discharge.getFirst().getUur();
+        var lastToDischarge = discharge.getLast().getUur();
+
+        myPrices.stream().forEach(ep -> {
+            if (ep.getUur() > lastToFull && ep.getUur() < firstToDischarge) {
+                ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
+            }
+            if (ep.getUur() < firstToFull || ep.getUur() > lastToDischarge) {
+                ep.setStatus(EPrice.ZERO);
+            }
+        });
+    }
+
+    private void setSummerStatus(LocalDate date) {
+        var myPrices = allPrices.stream().filter(ep -> ep.getDatum().equals(date)).collect(Collectors.toList());
+
+        var low = myPrices.stream().filter(ep -> ep.isGoedkoop)
+                .sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
+                .collect(Collectors.toList());
+        var high = myPrices.stream().filter(ep -> ep.isDuur)
+                .sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
+                .collect(Collectors.toList());
+
+        if (high.isEmpty()) {
+            return;
+        }
+
+        myPrices.stream().filter(ep -> ep.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
+                .forEach(ep -> ep.setStatus(EPrice.STANDBY));
+
+        low.forEach(l -> l.setStatus(EPrice.TO_FULL));
+        high.forEach(h -> h.setStatus(EPrice.ZERO_DISCHARGE_ONLY));
+
+        var full = allPrices.stream().filter(l -> l.getDatum().equals(date) && l.getStatus().equals(EPrice.TO_FULL))
+                .collect(Collectors.toList());
+        var discharge = allPrices.stream().filter(l -> l.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
+                .collect(Collectors.toList());
+
+        var firstToFull = full.getFirst().getUur();
+        var lastToFull = full.getLast().getUur();
+
+        var firstToDischarge = discharge.getFirst().getUur();
+        var lastToDischarge = discharge.getLast().getUur();
+
+        myPrices.stream().forEach(ep -> {
+            if (ep.getUur() > firstToDischarge) {
+                ep.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
+            }
+        });
     }
 }

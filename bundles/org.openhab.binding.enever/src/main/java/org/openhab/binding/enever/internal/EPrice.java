@@ -20,14 +20,14 @@ public class EPrice implements Comparable<EPrice> {
     protected static final String ZERO = "zero";
     protected static final String STANDBY = "standby";
     protected static final String TO_FULL = "to_full";
-    protected static final String ZERO_DISCHARGE = "zero_discharge_only";
-    protected static final String ZERO_CHARGE = "zero_charge_only";
+    protected static final String ZERO_DISCHARGE_ONLY = "zero_discharge_only";
+    protected static final String ZERO_CHARGE_ONLY = "zero_charge_only";
 
     private LocalDateTime datum = LocalDateTime.now();
 
     private Double prijs = 0.0;
 
-    public String status = ZERO;
+    private String status = "";
 
     public Boolean isDuur = false;
     public Boolean isGoedkoop = false;
@@ -47,6 +47,14 @@ public class EPrice implements Comparable<EPrice> {
 
     public int getUur() {
         return datum.getHour();
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     @Override

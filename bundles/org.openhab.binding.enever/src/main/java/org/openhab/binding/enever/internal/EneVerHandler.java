@@ -24,6 +24,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -269,14 +270,20 @@ public class EneVerHandler extends BaseThingHandler {
         var prijs = ePrices.getPriceFor(now);
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(prijs.getPrijs()));
+            prijs = ePrices.getPriceFor(now.plusHours(1));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1, new DecimalType(prijs.getPrijs()));
+            prijs = ePrices.getPriceFor(now.plusHours(2));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2, new DecimalType(prijs.getPrijs()));
 
             if (prijs.isGoedkoop) {
-                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(1));
+                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("cheap"));
             } else if (prijs.isDuur) {
-                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(-1));
+                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("expensive"));
             } else {
-                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new DecimalType(0));
+                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("neutral"));
             }
+
+            updateState(EneVerBindingConstants.CHANNEL_BATTERY_STATUS, new StringType(prijs.getStatus()));
         }
     }
 
