@@ -26,21 +26,20 @@ import org.slf4j.LoggerFactory;
 
 public class EPrices {
 
-    public static final String SOLAR_MODE = "solar";
-    public static final String PRICES_MODE = "prices";
-
+    public static final String SOLAR_CONTROL = "solar";
+    public static final String PRICES_CONTROL = "prices";
 
     private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
 
     private TreeSet<EPrice> allPrices = new TreeSet<EPrice>();
-    public String statusMode = SOLAR_MODE;
+    public String controlStrategy = SOLAR_CONTROL;
     private Double treshold = 0.15;
     private Double minMaxTreshold = 0.4;
     private int numberOfHours = 2;
     public Map<LocalDate, Double> averagePrices = new Hashtable<>();
 
-    public EPrices(String statusMode, Double minMaxTreshold, Double priceTreshold, int numberOfHours) {
-        this.statusMode = statusMode;
+    public EPrices(String controlStrategy, Double minMaxTreshold, Double priceTreshold, int numberOfHours) {
+        this.controlStrategy = controlStrategy;
         this.minMaxTreshold = minMaxTreshold;
         this.treshold = priceTreshold;
         this.numberOfHours = numberOfHours;
@@ -83,9 +82,9 @@ public class EPrices {
                 .collect(Collectors.toList());
     }
 
-    private void initStatus(LocalDateTime dateTime) {
-        var avgPrice = averagePrices.get(dateTime.toLocalDate());
-        allPrices.stream().filter(ep -> ep.getDatum().equals(dateTime.toLocalDate()) && ep.getUur() >= dateTime.getHour()).forEach(ep -> {
+    private void initModes(List<EPrice> prices) {
+        var avgPrice = averagePrices.get(prices.getFirst().getDatum());
+        prices.stream().forEach(ep -> {
             if (ep.getPrijs() <= avgPrice) {
                 ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
             } else {
@@ -108,35 +107,38 @@ public class EPrices {
                 .collect(Collectors.toList());
 
         dates.forEach(date -> {
-            setStatus(date);
+            setModes(date);
         });
 
         allPrices.removeIf(ep -> ep.getDatum().isBefore(LocalDate.now()));
         averagePrices.keySet().removeIf(d -> d.isBefore(LocalDate.now()));
     }
 
-    public void resetStatus() {
-        setStatus(LocalDateTime.now());
+    public void resetModes() {
+        setModes(LocalDateTime.now());
     }
 
-    private void setStatus(LocalDate date) {
-        setStatus(LocalDateTime.of(date, java.time.LocalTime.MIDNIGHT));
+    private void setModes(LocalDate date) {
+        setModes(LocalDateTime.of(date, java.time.LocalTime.MIDNIGHT));
     }
 
-    private void setStatus(LocalDateTime dateTime) {
-        initStatus(dateTime);
-        
-        var myPrices = allPrices.stream().filter(ep -> ep.getDatum().equals(dateTime.toLocalDate())).collect(Collectors.toList());
+    public void setModes(LocalDateTime dateTime) {
+        var myPrices = allPrices.stream()
+                .filter(ep -> ep.getDatum().equals(dateTime.toLocalDate()) && ep.getUur() >= dateTime.getHour())
+                .collect(Collectors.toList());
+
+        initModes(myPrices);
+
         var matches = findMatchingPrices(myPrices);
 
-        if (PRICES_MODE.equals(statusMode)) {
+        if (PRICES_CONTROL.equals(controlStrategy)) {
             if (matches.isEmpty()) {
                 setSolarStatus(myPrices);
             } else {
                 setPricesStatus(myPrices, matches);
             }
         } else { // SOLAR_MODE
-            setSolarStatus(myPrices);  
+            setSolarStatus(myPrices);
         }
         logger.error("prices " + allPrices.toString());
     }
@@ -159,18 +161,18 @@ public class EPrices {
         high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
 
         high.forEach(h -> {
-            low.stream().filter(l -> l.getUur() < h.getUur()
-                    && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold)).findFirst().ifPresent(l -> {
+            low.stream().filter(l -> l.getUur() < h.getUur() && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold))
+                    .findFirst().ifPresent(l -> {
                         matches.put(h, l);
                         low.remove(l);
                     });
         });
         logger.error("matches " + matches.toString());
         return matches;
-    } 
+    }
 
     private void setPricesStatus(List<EPrice> prices, Map<EPrice, EPrice> matches) {
-        statusMode = PRICES_MODE;
+        controlStrategy = PRICES_CONTROL;
 
         prices.stream().forEach(ep -> ep.setStatus(EPrice.STANDBY));
 
@@ -179,13 +181,12 @@ public class EPrices {
             h.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
         });
 
-        var full = prices.stream().filter(l -> l.getStatus().equals(EPrice.TO_FULL))
-                .collect(Collectors.toList());
+        var full = prices.stream().filter(l -> l.getStatus().equals(EPrice.TO_FULL)).collect(Collectors.toList());
         var discharge = prices.stream().filter(l -> l.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
                 .collect(Collectors.toList());
 
         if (full.isEmpty()) {
-            initStatus(LocalDateTime.of(prices.getFirst().getDatum(), java.time.LocalTime.MIDNIGHT));
+            initModes(prices);
             return;
         }
 
@@ -207,7 +208,7 @@ public class EPrices {
     }
 
     private void setSolarStatus(List<EPrice> prices) {
-        statusMode = SOLAR_MODE;
+        controlStrategy = SOLAR_CONTROL;
         var date = prices.getFirst().getDatum();
 
         prices.stream().forEach(ep -> {

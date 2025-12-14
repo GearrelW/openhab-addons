@@ -64,7 +64,7 @@ public class EneVerHandler extends BaseThingHandler {
 
     private String token = "";
 
-    private String statusMode = EPrices.SOLAR_MODE;
+    private String statusMode = EPrices.SOLAR_CONTROL;
 
     private double treshold = 0;
     private double minMaxTreshold = 0;
@@ -85,7 +85,13 @@ public class EneVerHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // None
+        if (channelUID.getId().equals(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY)) {
+            if (command.toString().equals(EPrices.SOLAR_CONTROL) || command.toString().equals(EPrices.PRICES_CONTROL)) {
+                statusMode = command.toString();
+                ePrices.controlStrategy = statusMode;
+                ePrices.setModes(LocalDateTime.now());
+            }
+        }
     }
 
     /**
@@ -110,11 +116,6 @@ public class EneVerHandler extends BaseThingHandler {
 
             updateDailyChannels();
             updateHourlyChannels();
-
-            // logger.error("prices : " + ePrices.getPrices().toString());
-            logger.error("averagesNew : " + ePrices.averagePrices.toString());
-            logger.error("cheap : " + ePrices.getCheapPrices(now, numberOfHours).toString());
-            logger.error("expensive : " + ePrices.getExpensivePrices(now, numberOfHours).toString());
 
             // schedule get prices next day
             long nextDailyScheduleInNanos = Duration
@@ -179,10 +180,6 @@ public class EneVerHandler extends BaseThingHandler {
         }
 
         if (payload.getStatus() && (payload.getDate().isEqual(date) || debug)) {
-
-            // payload.getPrices().forEach((price) -> {
-            // ePrices.addPrice(price.getDatumTijd(), price.getPrijs());
-            // });
             var prices = payload.getPrices().stream()
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
@@ -266,7 +263,7 @@ public class EneVerHandler extends BaseThingHandler {
         if (average != null) {
             updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE, new DecimalType(average));
         }
-        updateState(EneVerBindingConstants.CHANNEL_BATTERY_STATUS_MODE, new StringType(ePrices.statusMode));
+        updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY, new StringType(ePrices.controlStrategy));
     }
 
     private void updateHourlyChannels() {
@@ -290,7 +287,7 @@ public class EneVerHandler extends BaseThingHandler {
                 updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("neutral"));
             }
 
-            updateState(EneVerBindingConstants.CHANNEL_BATTERY_STATUS, new StringType(prijs.getStatus()));
+            updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getStatus()));
         }
     }
 

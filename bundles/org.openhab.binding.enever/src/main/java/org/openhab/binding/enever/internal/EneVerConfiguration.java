@@ -33,8 +33,6 @@ public class EneVerConfiguration {
 
     public int minMaxTreshold = 0;
 
-    public int numberOfHoursBeforeWarning = 0;
-
     public int warningTreshold = 0;
 
     public boolean excludeNightlyHours = false;

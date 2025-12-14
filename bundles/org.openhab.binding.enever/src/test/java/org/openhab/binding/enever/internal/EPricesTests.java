@@ -20,7 +20,7 @@ public class EPricesTests {
 
     @Test
     public void testProcessPricesPrices() {
-        var prices = new EPrices(EPrices.PRICES_MODE, 0.50, 0.15, 3);
+        var prices = new EPrices(EPrices.PRICES_CONTROL, 0.50, 0.15, 3);
         var pr1 = gson.fromJson(testDataE1, Payload.class);
         var pr2 = gson.fromJson(testDataE2, Payload.class);
 
@@ -36,7 +36,7 @@ public class EPricesTests {
 
     @Test
     public void testProcessPricesSolar() {
-        var prices = new EPrices(EPrices.SOLAR_MODE, 0.40, 0.15, 3);
+        var prices = new EPrices(EPrices.SOLAR_CONTROL, 0.40, 0.15, 3);
         var pr1 = gson.fromJson(testDataE1, Payload.class);
         var pr2 = gson.fromJson(testDataE2, Payload.class);
 
@@ -47,7 +47,7 @@ public class EPricesTests {
         prices.addPrices(prices1);
         prices.addPrices(prices2);
 
-        logger.info("mode: " + prices.statusMode);
+        logger.info("mode: " + prices.controlStrategy);
         logger.info("Prices: " + prices.getAllPrices().toString());
     }
 }

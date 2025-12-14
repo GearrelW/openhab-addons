@@ -35,17 +35,13 @@
 				<label>Cheap/Expensive hours</label>
 				<description>Indicates cheap, expensive and normal hours. neutral, cheap, expensive</description>
 			</channel>
-			<channel id="battery-status" typeId="channel-indication">
-				<label>Battery Status</label>
-				<description>Indicates proposed battery status</description>
+			<channel id="battery-control-mode" typeId="channel-indication">
+				<label>Battery Control Mode</label>
+				<description>Indicates proposed battery control mode</description>
 			</channel>
-			<channel id="battery-status-mode" typeId="channel-indication">
-				<label>Battery Status Mode</label>
+			<channel id="battery-control-strategy" typeId="channel-indication">
+				<label>Battery Control Strategy</label>
 				<description>solar or price</description>
-			</channel>
-			<channel id="warning-hour" typeId="channel-warning">
-				<label>High price warning</label>
-				<description>Warning when the electricity price will be high after the configured hours</description>
 			</channel>
 			<channel id="peak-hour" typeId="channel-peak">
 				<label>Peak price Hour</label>
@@ -73,10 +69,6 @@
 				<label>Treshold (%) for min/max hours</label>
 				<description>Treshold in percentage of the average hour</description>
 			</parameter>
-			<parameter name="numberOfHoursBeforeWarning" type="integer" required="false">
-				<label>Number of hours before warning</label>
-				<description>Number of hours before peak electricity warning</description>
-			</parameter>
 			<parameter name="warningTreshold" type="integer" required="false">
 				<label>Treshold (%) for peak electricity</label>
 				<description>Treshold in percentage for the peak electricity price</description>
@@ -103,12 +95,6 @@
 		<item-type>String</item-type>
 		<label>Indication</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
 		<description>Cheap or expensive hour</description>
-		<state readOnly="true"></state>
-	</channel-type>
-	<channel-type id="channel-warning">
-		<item-type>Switch</item-type>
-		<label>Warning</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-		<description>Price warning</description>
 		<state readOnly="true"></state>
 	</channel-type>
 	<channel-type id="channel-peak">
