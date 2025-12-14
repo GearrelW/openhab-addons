@@ -14,7 +14,7 @@ package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -26,14 +26,22 @@ import org.slf4j.LoggerFactory;
 
 public class EPrices {
 
+    public static final String SOLAR_MODE = "solar";
+    public static final String PRICES_MODE = "prices";
+
+
     private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
 
     private TreeSet<EPrice> allPrices = new TreeSet<EPrice>();
+    public String statusMode = SOLAR_MODE;
     private Double treshold = 0.15;
+    private Double minMaxTreshold = 0.4;
     private int numberOfHours = 2;
     public Map<LocalDate, Double> averagePrices = new Hashtable<>();
 
-    public EPrices(Double priceTreshold, int numberOfHours) {
+    public EPrices(String statusMode, Double minMaxTreshold, Double priceTreshold, int numberOfHours) {
+        this.statusMode = statusMode;
+        this.minMaxTreshold = minMaxTreshold;
         this.treshold = priceTreshold;
         this.numberOfHours = numberOfHours;
     }
@@ -60,8 +68,8 @@ public class EPrices {
                 .findFirst().orElse(null);
     }
 
-    public EPrice getMaxPrice(LocalDateTime date) {
-        return allPrices.stream().filter(ep -> ep.getDatum().equals(date.toLocalDate()))
+    public EPrice getMaxPrice(LocalDate date) {
+        return allPrices.stream().filter(ep -> ep.getDatum().equals(date))
                 .max((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())).orElse(null);
     }
 
@@ -75,84 +83,109 @@ public class EPrices {
                 .collect(Collectors.toList());
     }
 
-    private void initStatus(List<LocalDate> dates) {
-        dates.forEach(date -> {
-            var avgPrice = averagePrices.get(date);
-            allPrices.stream().filter(ep -> ep.getDatum().equals(date)).forEach(ep -> {
-                if (ep.getPrijs() <= avgPrice) {
-                    ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
-                } else {
-                    ep.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
-                }
+    private void initStatus(LocalDateTime dateTime) {
+        var avgPrice = averagePrices.get(dateTime.toLocalDate());
+        allPrices.stream().filter(ep -> ep.getDatum().equals(dateTime.toLocalDate()) && ep.getUur() >= dateTime.getHour()).forEach(ep -> {
+            if (ep.getPrijs() <= avgPrice) {
+                ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
+            } else {
+                ep.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
+            }
 
-                if (ep.getPrijs() <= (avgPrice * (1 - treshold))) {
-                    ep.isGoedkoop = true;
-                }
-                if (ep.getPrijs() > (avgPrice * (1 + treshold))) {
-                    ep.isDuur = true;
-                }
-            });
+            if (ep.getPrijs() <= (avgPrice * (1 - treshold))) {
+                ep.isGoedkoop = true;
+            }
+            if (ep.getPrijs() > (avgPrice * (1 + treshold))) {
+                ep.isDuur = true;
+            }
         });
     }
 
-    private void processPrices() {
+    public void processPrices() {
         averagePrices = allPrices.stream()
                 .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)));
         var dates = allPrices.stream().filter(ep -> ep.getStatus().isEmpty()).map(EPrice::getDatum).distinct()
                 .collect(Collectors.toList());
 
-        setStatus(dates);
+        dates.forEach(date -> {
+            setStatus(date);
+        });
 
         allPrices.removeIf(ep -> ep.getDatum().isBefore(LocalDate.now()));
         averagePrices.keySet().removeIf(d -> d.isBefore(LocalDate.now()));
     }
 
-    private void setStatus(List<LocalDate> dates) {
-        initStatus(dates);
-        dates.forEach(date -> {
-            var winter = (date.getMonthValue() > 10 || date.getMonthValue() < 3);
-            if (winter) {
-                setWinterStatus(date);
+    public void resetStatus() {
+        setStatus(LocalDateTime.now());
+    }
+
+    private void setStatus(LocalDate date) {
+        setStatus(LocalDateTime.of(date, java.time.LocalTime.MIDNIGHT));
+    }
+
+    private void setStatus(LocalDateTime dateTime) {
+        initStatus(dateTime);
+        
+        var myPrices = allPrices.stream().filter(ep -> ep.getDatum().equals(dateTime.toLocalDate())).collect(Collectors.toList());
+        var matches = findMatchingPrices(myPrices);
+
+        if (PRICES_MODE.equals(statusMode)) {
+            if (matches.isEmpty()) {
+                setSolarStatus(myPrices);
             } else {
-                setSummerStatus(date);
+                setPricesStatus(myPrices, matches);
             }
-        });
+        } else { // SOLAR_MODE
+            setSolarStatus(myPrices);  
+        }
         logger.error("prices " + allPrices.toString());
     }
 
-    private void setWinterStatus(LocalDate date) {
-        var myPrices = allPrices.stream().filter(ep -> ep.getDatum().equals(date)).collect(Collectors.toList());
+    private Map<EPrice, EPrice> findMatchingPrices(List<EPrice> prices) {
+        var matches = new HashMap<EPrice, EPrice>();
 
-        var low = myPrices.stream().filter(ep -> ep.isGoedkoop)
+        var low = prices.stream().filter(ep -> ep.isGoedkoop)
                 .sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
                 .collect(Collectors.toList());
-        var high = myPrices.stream().filter(ep -> ep.isDuur)
+        var high = prices.stream().filter(ep -> ep.isDuur)
                 .sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
                 .collect(Collectors.toList());
 
         if (high.isEmpty() || low.isEmpty()) {
-            return;
+            return matches;
         }
-        myPrices.stream().forEach(ep -> ep.setStatus(EPrice.STANDBY));
 
         low.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
         high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
 
         high.forEach(h -> {
-            low.stream().filter(l -> !l.getStatus().equals(EPrice.TO_FULL) && l.getUur() < h.getUur()
-                    && h.getPrijs() >= l.getPrijs() + 0.15).findFirst().ifPresent(l -> {
-                        l.setStatus(EPrice.TO_FULL);
-                        h.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
+            low.stream().filter(l -> l.getUur() < h.getUur()
+                    && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold)).findFirst().ifPresent(l -> {
+                        matches.put(h, l);
+                        low.remove(l);
                     });
         });
+        logger.error("matches " + matches.toString());
+        return matches;
+    } 
 
-        var full = allPrices.stream().filter(l -> l.getDatum().equals(date) && l.getStatus().equals(EPrice.TO_FULL))
+    private void setPricesStatus(List<EPrice> prices, Map<EPrice, EPrice> matches) {
+        statusMode = PRICES_MODE;
+
+        prices.stream().forEach(ep -> ep.setStatus(EPrice.STANDBY));
+
+        matches.forEach((h, l) -> {
+            l.setStatus(EPrice.TO_FULL);
+            h.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
+        });
+
+        var full = prices.stream().filter(l -> l.getStatus().equals(EPrice.TO_FULL))
                 .collect(Collectors.toList());
-        var discharge = allPrices.stream().filter(l -> l.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
+        var discharge = prices.stream().filter(l -> l.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
                 .collect(Collectors.toList());
 
         if (full.isEmpty()) {
-            initStatus(Collections.singletonList(date));
+            initStatus(LocalDateTime.of(prices.getFirst().getDatum(), java.time.LocalTime.MIDNIGHT));
             return;
         }
 
@@ -162,9 +195,10 @@ public class EPrices {
         var firstToDischarge = discharge.getFirst().getUur();
         var lastToDischarge = discharge.getLast().getUur();
 
-        myPrices.stream().forEach(ep -> {
+        prices.stream().forEach(ep -> {
             if (ep.getUur() > lastToFull && ep.getUur() < firstToDischarge) {
                 ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
+                return;
             }
             if (ep.getUur() < firstToFull || ep.getUur() > lastToDischarge) {
                 ep.setStatus(EPrice.ZERO);
@@ -172,40 +206,26 @@ public class EPrices {
         });
     }
 
-    private void setSummerStatus(LocalDate date) {
-        var myPrices = allPrices.stream().filter(ep -> ep.getDatum().equals(date)).collect(Collectors.toList());
+    private void setSolarStatus(List<EPrice> prices) {
+        statusMode = SOLAR_MODE;
+        var date = prices.getFirst().getDatum();
 
-        var low = myPrices.stream().filter(ep -> ep.isGoedkoop)
-                .sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
-                .collect(Collectors.toList());
-        var high = myPrices.stream().filter(ep -> ep.isDuur)
-                .sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
-                .collect(Collectors.toList());
-
-        if (high.isEmpty()) {
-            return;
-        }
-
-        myPrices.stream().filter(ep -> ep.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
-                .forEach(ep -> ep.setStatus(EPrice.STANDBY));
-
-        low.forEach(l -> l.setStatus(EPrice.TO_FULL));
-        high.forEach(h -> h.setStatus(EPrice.ZERO_DISCHARGE_ONLY));
-
-        var full = allPrices.stream().filter(l -> l.getDatum().equals(date) && l.getStatus().equals(EPrice.TO_FULL))
-                .collect(Collectors.toList());
-        var discharge = allPrices.stream().filter(l -> l.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
-                .collect(Collectors.toList());
-
-        var firstToFull = full.getFirst().getUur();
-        var lastToFull = full.getLast().getUur();
-
-        var firstToDischarge = discharge.getFirst().getUur();
-        var lastToDischarge = discharge.getLast().getUur();
-
-        myPrices.stream().forEach(ep -> {
-            if (ep.getUur() > firstToDischarge) {
-                ep.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
+        prices.stream().forEach(ep -> {
+            if (ep.getUur() < 9) {
+                ep.setStatus(EPrice.ZERO);
+                return;
+            }
+            if (ep.getUur() > 16) {
+                var maxPrice = getMaxPrice(date);
+                if (maxPrice != null && (maxPrice.getUur() - 1) > 16) {
+                    if (ep.getUur() < (maxPrice.getUur() - 1)) {
+                        ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
+                    } else {
+                        ep.setStatus(EPrice.ZERO);
+                    }
+                } else {
+                    ep.setStatus(EPrice.ZERO);
+                }
             }
         });
     }

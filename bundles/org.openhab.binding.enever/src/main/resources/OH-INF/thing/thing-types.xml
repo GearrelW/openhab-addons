@@ -39,6 +39,10 @@
 				<label>Battery Status</label>
 				<description>Indicates proposed battery status</description>
 			</channel>
+			<channel id="battery-status-mode" typeId="channel-indication">
+				<label>Battery Status Mode</label>
+				<description>solar or price</description>
+			</channel>
 			<channel id="warning-hour" typeId="channel-warning">
 				<label>High price warning</label>
 				<description>Warning when the electricity price will be high after the configured hours</description>
@@ -63,6 +67,10 @@
 			</parameter>
 			<parameter name="priceTreshold" type="integer" required="false">
 				<label>Treshold (%) for cheap/expensive hours</label>
+				<description>Treshold in percentage of the average hour</description>
+			</parameter>
+			<parameter name="minMaxTreshold" type="integer" required="false">
+				<label>Treshold (%) for min/max hours</label>
 				<description>Treshold in percentage of the average hour</description>
 			</parameter>
 			<parameter name="numberOfHoursBeforeWarning" type="integer" required="false">

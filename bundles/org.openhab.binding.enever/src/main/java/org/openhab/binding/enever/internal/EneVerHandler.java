@@ -64,13 +64,16 @@ public class EneVerHandler extends BaseThingHandler {
 
     private String token = "";
 
+    private String statusMode = EPrices.SOLAR_MODE;
+
     private double treshold = 0;
+    private double minMaxTreshold = 0;
 
     private int numberOfHours = 0;
 
     private boolean excludeNightlyHours = false;
 
-    private EPrices ePrices = new EPrices(treshold, numberOfHours);
+    private EPrices ePrices = new EPrices(statusMode, minMaxTreshold, treshold, numberOfHours);
 
     private double gasPrice = 0;
 
@@ -92,7 +95,7 @@ public class EneVerHandler extends BaseThingHandler {
     public void initialize() {
         config = getConfigAs(EneVerConfiguration.class);
         if (configure()) {
-            ePrices = new EPrices(treshold, numberOfHours);
+            ePrices = new EPrices(statusMode, minMaxTreshold, treshold, numberOfHours);
 
             // get prices for today
             if (retrieveElectricityPrices(LocalDate.now()) && retrieveGasPrice()) {
@@ -144,6 +147,7 @@ public class EneVerHandler extends BaseThingHandler {
             debug = config.debug;
             excludeNightlyHours = config.excludeNightlyHours;
             treshold = (double) config.priceTreshold / 100;
+            minMaxTreshold = (double) config.minMaxTreshold / 100;
             return true;
         }
     }
@@ -156,9 +160,9 @@ public class EneVerHandler extends BaseThingHandler {
 
         logger.info("Retrieving prices for " + date);
 
-        String url = "https://enever.nl/api/stroomprijs_vandaag.php?token=" + token;
+        String url = "https://enever.nl/apiv3/stroomprijs_vandaag.php?token=" + token;
         if (date.isAfter(LocalDate.now())) {
-            url = "https://enever.nl/api/stroomprijs_morgen.php?token=" + token;
+            url = "https://enever.nl/apiv3/stroomprijs_morgen.php?token=" + token;
         }
 
         Payload payload = null;
@@ -190,7 +194,7 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     private boolean retrieveGasPrice() {
-        String url = "https://enever.nl/api/gasprijs_vandaag.php?token=" + token;
+        String url = "https://enever.nl/apiv3/gasprijs_vandaag.php?token=" + token;
 
         Payload p = null;
         if (!debug) {
@@ -253,7 +257,7 @@ public class EneVerHandler extends BaseThingHandler {
         var datum = LocalDate.now();
 
         updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice));
-        var maxPrice = ePrices.getMaxPrice(LocalDateTime.now());
+        var maxPrice = ePrices.getMaxPrice(LocalDate.now());
         if (maxPrice != null) {
             updateState(EneVerBindingConstants.CHANNEL_PEAK_HOUR, new DecimalType(maxPrice.getUur()));
         }
@@ -262,6 +266,7 @@ public class EneVerHandler extends BaseThingHandler {
         if (average != null) {
             updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE, new DecimalType(average));
         }
+        updateState(EneVerBindingConstants.CHANNEL_BATTERY_STATUS_MODE, new StringType(ePrices.statusMode));
     }
 
     private void updateHourlyChannels() {

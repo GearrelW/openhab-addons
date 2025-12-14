@@ -31,6 +31,8 @@ public class EneVerConfiguration {
 
     public int priceTreshold = 0;
 
+    public int minMaxTreshold = 0;
+
     public int numberOfHoursBeforeWarning = 0;
 
     public int warningTreshold = 0;
