@@ -10,43 +10,44 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.enever.internal;
+package org.openhab.binding.enever.internal.payloads;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.eclipse.jdt.annotation.NonNullByDefault;
 
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Class that provides storage for the json objects obtained from HomeWizard devices.
+ * Class that provides storage for the json objects obtained from EneVer.
  *
  * @author Gearrel Welvaart - Initial contribution
  *
  */
-@NonNullByDefault
-public class Payload {
+public class EneVerPayload implements IPayload {
     @SerializedName("status")
     private boolean status = true;
 
     @SerializedName("data")
     private List<PayloadPriceItem> prices = new ArrayList<PayloadPriceItem>();
 
+    @Override
     public boolean getStatus() {
         return status;
     }
 
-    public LocalDate getDate() {
-        return prices.getFirst().getDatum();
+    @Override
+    public List<PayloadPriceItem> getElectricityPrices() {
+        if (prices.size() > 1) {
+            return prices;
+        }
+        return new ArrayList<PayloadPriceItem>();
     }
 
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
-
-    public List<PayloadPriceItem> getPrices() {
-        return prices;
+    @Override
+    public List<PayloadPriceItem> getGasPrices() {
+        if (prices.size() == 1) {
+            return prices;
+        }
+        return new ArrayList<PayloadPriceItem>();
     }
 }

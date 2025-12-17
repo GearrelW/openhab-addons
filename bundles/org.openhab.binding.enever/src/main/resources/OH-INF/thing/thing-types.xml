@@ -39,9 +39,7 @@
 				<label>Battery Control Mode</label>
 				<description>Indicates proposed battery control mode</description>
 			</channel>
-			<channel id="battery-control-strategy" typeId="channel-indication">
-				<label>Battery Control Strategy</label>
-				<description>solar or price</description>
+			<channel id="battery-control-strategy" typeId="channel-strategy">
 			</channel>
 			<channel id="peak-hour" typeId="channel-peak">
 				<label>Peak price Hour</label>
@@ -96,6 +94,17 @@
 		<label>Indication</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
 		<description>Cheap or expensive hour</description>
 		<state readOnly="true"></state>
+	</channel-type>
+	<channel-type id="channel-strategy">
+		<item-type>String</item-type>
+		<label>Battery Control Strategy</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Solar or price strategy</description>
+		<command>
+			<options>
+				<option value="solar">Solar</option>
+				<option value="price">Price</option>
+			</options>
+		</command>
 	</channel-type>
 	<channel-type id="channel-peak">
 		<item-type>Number</item-type>

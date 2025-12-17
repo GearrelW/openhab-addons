@@ -4,10 +4,14 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+import org.openhab.binding.enever.internal.payloads.EneVerPayload;
+import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
+import org.openhab.binding.enever.internal.payloads.ZonneplanPayloadPriceItem;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 
 public class EPricesTests {
 
@@ -21,12 +25,12 @@ public class EPricesTests {
     @Test
     public void testProcessPricesPrices() {
         var prices = new EPrices(EPrices.PRICES_CONTROL, 0.50, 0.15, 3);
-        var pr1 = gson.fromJson(testDataE1, Payload.class);
-        var pr2 = gson.fromJson(testDataE2, Payload.class);
+        var pr1 = gson.fromJson(testDataE1, EneVerPayload.class);
+        var pr2 = gson.fromJson(testDataE2, EneVerPayload.class);
 
-        var prices1 = pr1.getPrices().stream()
+        var prices1 = pr1.getElectricityPrices().stream()
                 .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
-        var prices2 = pr2.getPrices().stream()
+        var prices2 = pr2.getElectricityPrices().stream()
                 .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
         prices.addPrices(prices1);
         prices.addPrices(prices2);
@@ -37,17 +41,78 @@ public class EPricesTests {
     @Test
     public void testProcessPricesSolar() {
         var prices = new EPrices(EPrices.SOLAR_CONTROL, 0.40, 0.15, 3);
-        var pr1 = gson.fromJson(testDataE1, Payload.class);
-        var pr2 = gson.fromJson(testDataE2, Payload.class);
+        var pr1 = gson.fromJson(testDataE1, EneVerPayload.class);
+        var pr2 = gson.fromJson(testDataE2, EneVerPayload.class);
 
-        var prices1 = pr1.getPrices().stream()
+        var prices1 = pr1.getElectricityPrices().stream()
                 .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
-        var prices2 = pr2.getPrices().stream()
+        var prices2 = pr2.getElectricityPrices().stream()
                 .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
         prices.addPrices(prices1);
         prices.addPrices(prices2);
 
         logger.info("mode: " + prices.controlStrategy);
         logger.info("Prices: " + prices.getAllPrices().toString());
+    }
+
+    @Test
+    public void testGson() {
+        var js = "{\r\n" + //
+                "  \"pageProps\": {\r\n" + //
+                "    \"data\": {\r\n" + //
+                "      \"templateName\": \"block-builder\",\r\n" + //
+                "      \"templateProps\": {\r\n" + //
+                "        \"pageLayout\": \"default\",\r\n" + //
+                "        \"title\": \"Dynamisch energiecontract\",\r\n" + //
+                "        \"featuredImage\": null,\r\n" + //
+                "        \"modified\": \"2025-11-24T13:48:59\",\r\n" + //
+                "        \"noIndex\": null,\r\n" + //
+                "        \"energyData\": {\r\n" + //
+                "          \"__typename\": \"EnergyData\",\r\n" + //
+                "          \"electricity\": {\r\n" + //
+                "            \"__typename\": \"Electricity\",\r\n" + //
+                "            \"hours\": [\r\n" + //
+                "              {\r\n" + //
+                "                \"__typename\": \"ElectricityHour\",\r\n" + //
+                "                \"dateTime\": \"2025-12-17T22:00:00.000000Z\",\r\n" + //
+                "                \"priceTotalTaxIncluded\": 2355524,\r\n" + //
+                "                \"marketPrice\": 766025,\r\n" + //
+                "                \"priceInclHandlingVat\": 1126890,\r\n" + //
+                "                \"priceEnergyTaxes\": 1228634,\r\n" + //
+                "                \"priceCbsAverage\": 0.4,\r\n" + //
+                "                \"pricingProfile\": \"low\"\r\n" + //
+                "              },\r\n" + //
+                "              {\r\n" + //
+                "                \"__typename\": \"ElectricityHour\",\r\n" + //
+                "                \"dateTime\": \"2025-12-17T21:00:00.000000Z\",\r\n" + //
+                "                \"priceTotalTaxIncluded\": 2405618,\r\n" + //
+                "                \"marketPrice\": 807425,\r\n" + //
+                "                \"priceInclHandlingVat\": 1176984,\r\n" + //
+                "                \"priceEnergyTaxes\": 1228634,\r\n" + //
+                "                \"priceCbsAverage\": 0.4,\r\n" + //
+                "                \"pricingProfile\": \"low\"\r\n" + //
+                "              }\r\n" + //
+                "            ]\r\n" + //
+                "          }\r\n" + //
+                "        }\r\n" + //
+                "      }\r\n" + //
+                "    }\r\n" + //
+                "  }\r\n" + //
+                "}";
+        var ob = JsonParser.parseString(js).getAsJsonObject();
+
+        var hours = JsonParser.parseString(js).getAsJsonObject().get("pageProps").getAsJsonObject().get("data")
+                .getAsJsonObject().get("templateProps").getAsJsonObject().get("energyData").getAsJsonObject()
+                .get("electricity").getAsJsonObject().get("hours");
+
+        // for (var hour : hours) {
+        var price = gson.fromJson(hours.toString(), ZonneplanPayloadPriceItem[].class);
+        for (var p : price) {
+            logger.info("Price: " + p.toString());
+        }
+
+        // var datum = gson.fromJson(hour, PayloadPriceItem.class).getDatum();
+        // logger.info("Datum: " + datum);
+        // }
     }
 }

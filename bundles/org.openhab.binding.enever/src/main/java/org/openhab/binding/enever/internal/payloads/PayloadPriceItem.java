@@ -10,31 +10,29 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.enever.internal;
+package org.openhab.binding.enever.internal.payloads;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
-
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Class that provides storage for the json objects obtained from HomeWizard devices.
+ * Class that provides storage for the json objects obtained from EneVer.
  *
  * @author Gearrel Welvaart - Initial contribution
  *
  */
-@NonNullByDefault
+
 public class PayloadPriceItem {
 
-    @SerializedName("datum")
-    private String datum = "";
+    @SerializedName(value = "datum", alternate = "dateTime")
+    protected String datum = "";
 
-    @SerializedName("prijsZP")
-    private String prijs = "";
+    @SerializedName(value = "prijsZP", alternate = "priceTotalTaxIncluded")
+    protected String prijs = "";
 
     public LocalDateTime getDatumTijd() {
         try {
@@ -48,11 +46,20 @@ public class PayloadPriceItem {
         return getDatumTijd().toLocalDate();
     }
 
+    // public void setDatum(String newDate) {
+    // datum = datum
+    // }
+
     public Double getPrijs() {
         try {
             return Double.parseDouble(prijs);
         } catch (NumberFormatException ex) {
             return 0.0;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Datum: " + getDatumTijd() + " Prijs: " + getPrijs();
     }
 }

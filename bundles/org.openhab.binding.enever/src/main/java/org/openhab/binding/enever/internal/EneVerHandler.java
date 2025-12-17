@@ -22,6 +22,10 @@ import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.binding.enever.internal.payloads.EneVerPayload;
+import org.openhab.binding.enever.internal.payloads.IPayload;
+import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
+import org.openhab.binding.enever.internal.payloads.ZonneplanPayload;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.StringType;
@@ -55,12 +59,13 @@ public class EneVerHandler extends BaseThingHandler {
 
     private @Nullable EneVerConfiguration config;
 
+    private @Nullable ScheduledFuture<?> gasJob;
+    private @Nullable ScheduledFuture<?> nextDayJob;
     private @Nullable ScheduledFuture<?> dailyJob;
     private @Nullable ScheduledFuture<?> hourlyJob;
 
-    private String testDataE = "{\"status\":\"true\",\"data\":[{\"datum\":\"2025-12-12T00:00:00+01:00\",\"prijsZP\":\"0.251052\"},{\"datum\":\"2025-12-12T01:00:00+01:00\",\"prijsZP\":\"0.250399\"},{\"datum\":\"2025-12-12T02:00:00+01:00\",\"prijsZP\":\"0.246046\"},{\"datum\":\"2025-12-12T03:00:00+01:00\",\"prijsZP\":\"0.244025\"},{\"datum\":\"2025-12-12T04:00:00+01:00\",\"prijsZP\":\"0.137875\"},{\"datum\":\"2025-12-12T05:00:00+01:00\",\"prijsZP\":\"0.239660\"},{\"datum\":\"2025-12-12T06:00:00+01:00\",\"prijsZP\":\"0.234820\"},{\"datum\":\"2025-12-12T07:00:00+01:00\",\"prijsZP\":\"0.175960\"},{\"datum\":\"2025-12-12T08:00:00+01:00\",\"prijsZP\":\"0.296155\"},{\"datum\":\"2025-12-12T09:00:00+01:00\",\"prijsZP\":\"0.112788\"},{\"datum\":\"2025-12-12T10:00:00+01:00\",\"prijsZP\":\"0.254749\"},{\"datum\":\"2025-12-12T11:00:00+01:00\",\"prijsZP\":\"0.254183\"},{\"datum\":\"2025-12-12T12:00:00+01:00\",\"prijsZP\":\"0.250623\"},{\"datum\":\"2025-12-12T13:00:00+01:00\",\"prijsZP\":\"0.252643\"},{\"datum\":\"2025-12-12T14:00:00+01:00\",\"prijsZP\":\"0.261440\"},{\"datum\":\"2025-12-12T15:00:00+01:00\",\"prijsZP\":\"0.260436\"},{\"datum\":\"2025-12-12T16:00:00+01:00\",\"prijsZP\":\"0.503209\"},{\"datum\":\"2025-12-12T17:00:00+01:00\",\"prijsZP\":\"0.598418\"},{\"datum\":\"2025-12-12T18:00:00+01:00\",\"prijsZP\":\"0.289403\"},{\"datum\":\"2025-12-12T19:00:00+01:00\",\"prijsZP\":\"0.284433\"},{\"datum\":\"2025-12-12T20:00:00+01:00\",\"prijsZP\":\"0.576320\"},{\"datum\":\"2025-12-12T21:00:00+01:00\",\"prijsZP\":\"0.259247\"},{\"datum\":\"2025-12-12T22:00:00+01:00\",\"prijsZP\":\"0.253191\"},{\"datum\":\"2025-12-12T23:00:00+01:00\",\"prijsZP\":\"0.245710\"}],\"code\":\"5\"}";
+    private String testDataE = "{\"status\":\"true\",\"data\":[{\"datum\":\"2025-12-15T00:00:00+01:00\",\"prijsZP\":\"0.251052\"},{\"datum\":\"2025-12-15T01:00:00+01:00\",\"prijsZP\":\"0.250399\"},{\"datum\":\"2025-12-15T02:00:00+01:00\",\"prijsZP\":\"0.246046\"},{\"datum\":\"2025-12-15T03:00:00+01:00\",\"prijsZP\":\"0.244025\"},{\"datum\":\"2025-12-15T04:00:00+01:00\",\"prijsZP\":\"0.137875\"},{\"datum\":\"2025-12-15T05:00:00+01:00\",\"prijsZP\":\"0.239660\"},{\"datum\":\"2025-12-15T06:00:00+01:00\",\"prijsZP\":\"0.234820\"},{\"datum\":\"2025-12-15T07:00:00+01:00\",\"prijsZP\":\"0.175960\"},{\"datum\":\"2025-12-15T08:00:00+01:00\",\"prijsZP\":\"0.296155\"},{\"datum\":\"2025-12-15T09:00:00+01:00\",\"prijsZP\":\"0.112788\"},{\"datum\":\"2025-12-15T10:00:00+01:00\",\"prijsZP\":\"0.254749\"},{\"datum\":\"2025-12-15T11:00:00+01:00\",\"prijsZP\":\"0.254183\"},{\"datum\":\"2025-12-15T12:00:00+01:00\",\"prijsZP\":\"0.250623\"},{\"datum\":\"2025-12-15T13:00:00+01:00\",\"prijsZP\":\"0.252643\"},{\"datum\":\"2025-12-15T14:00:00+01:00\",\"prijsZP\":\"0.261440\"},{\"datum\":\"2025-12-15T15:00:00+01:00\",\"prijsZP\":\"0.260436\"},{\"datum\":\"2025-12-15T16:00:00+01:00\",\"prijsZP\":\"0.503209\"},{\"datum\":\"2025-12-15T17:00:00+01:00\",\"prijsZP\":\"0.598418\"},{\"datum\":\"2025-12-15T18:00:00+01:00\",\"prijsZP\":\"0.289403\"},{\"datum\":\"2025-12-15T19:00:00+01:00\",\"prijsZP\":\"0.284433\"},{\"datum\":\"2025-12-15T20:00:00+01:00\",\"prijsZP\":\"0.576320\"},{\"datum\":\"2025-12-15T21:00:00+01:00\",\"prijsZP\":\"0.259247\"},{\"datum\":\"2025-12-15T22:00:00+01:00\",\"prijsZP\":\"0.253191\"},{\"datum\":\"2025-12-15T23:00:00+01:00\",\"prijsZP\":\"0.245710\"}],\"code\":\"5\"}";
     private String testDataG = "{\"status\":\"true\",\"data\":[{\"datum\":\"2024-09-24 06:00:00\",\"prijsEGSI\":\"0.350059\",\"prijsEOD\":\"0.354690\",\"prijsAA\":\"1.201611\",\"prijsAIP\":\"1.236701\",\"prijsANWB\":\"1.188121\",\"prijsBE\":\"1.204021\",\"prijsEE\":\"1.254199\",\"prijsEN\":\"1.208001\",\"prijsEVO\":\"1.188121\",\"prijsEZ\":\"1.189011\",\"prijsFR\":\"1.214475\",\"prijsGSL\":\"1.188121\",\"prijsMDE\":\"1.188121\",\"prijsNE\":\"1.188011\",\"prijsVDB\":\"1.235631\",\"prijsVON\":\"1.208911\",\"prijsWE\":\"1.213711\",\"prijsZG\":\"1.188121\",\"prijsZP\":\"1.209011\"}],\"code\":\"5\"}";
-    private String testEPrijzen = "{\"status\": \"true\", \"data\": [{\"datum\": \"2025-02-13 00:00:00\", \"prijsZP\": \"0.31054\"}, {\"datum\": \"2025-02-13 01:00:00\", \"prijsZP\": \"0.30634999999999996\"}, {\"datum\": \"2025-02-13 02:00:00\", \"prijsZP\": \"0.3115\"}, {\"datum\": \"2025-02-13 03:00:00\", \"prijsZP\": \"0.30469999999999997\"}, {\"datum\": \"2025-02-13 04:00:00\", \"prijsZP\": \"0.30723999999999996\"}, {\"datum\": \"2025-02-13 05:00:00\", \"prijsZP\": \"0.30621\"}, {\"datum\": \"2025-02-13 06:00:00\", \"prijsZP\": \"0.32237\"}, {\"datum\": \"2025-02-13 07:00:00\", \"prijsZP\": \"0.371\"}, {\"datum\": \"2025-02-13 08:00:00\", \"prijsZP\": \"0.40847999999999995\"}, {\"datum\": \"2025-02-13 09:00:00\", \"prijsZP\": \"0.40192\"}, {\"datum\": \"2025-02-13 10:00:00\", \"prijsZP\": \"0.38181\"}, {\"datum\": \"2025-02-13 11:00:00\", \"prijsZP\": \"0.36074\"}, {\"datum\": \"2025-02-13 12:00:00\", \"prijsZP\": \"0.34453\"}, {\"datum\": \"2025-02-13 13:00:00\", \"prijsZP\": \"0.34147\"}, {\"datum\": \"2025-02-13 14:00:00\", \"prijsZP\": \"0.33953\"}, {\"datum\": \"2025-02-13 15:00:00\", \"prijsZP\": \"0.3419\"}, {\"datum\": \"2025-02-13 16:00:00\", \"prijsZP\": \"0.35457\"}, {\"datum\": \"2025-02-13 17:00:00\", \"prijsZP\": \"0.3911\"}, {\"datum\": \"2025-02-13 18:00:00\", \"prijsZP\": \"0.38998\"}, {\"datum\": \"2025-02-13 19:00:00\", \"prijsZP\": \"0.38065\"}, {\"datum\": \"2025-02-13 20:00:00\", \"prijsZP\": \"0.35708999999999996\"}, {\"datum\": \"2025-02-13 21:00:00\", \"prijsZP\": \"0.33998999999999996\"}, {\"datum\": \"2025-02-13 22:00:00\", \"prijsZP\": \"0.32813\"}, {\"datum\": \"2025-02-13 23:00:00\", \"prijsZP\": \"0.31100999999999995\"}]}";
 
     private String token = "";
 
@@ -75,7 +80,7 @@ public class EneVerHandler extends BaseThingHandler {
 
     private EPrices ePrices = new EPrices(statusMode, minMaxTreshold, treshold, numberOfHours);
 
-    private double gasPrice = 0;
+    private @Nullable PayloadPriceItem gasPrice = new PayloadPriceItem();
 
     private boolean debug = true;
 
@@ -104,31 +109,50 @@ public class EneVerHandler extends BaseThingHandler {
             ePrices = new EPrices(statusMode, minMaxTreshold, treshold, numberOfHours);
 
             // get prices for today
-            if (retrieveElectricityPrices(LocalDate.now()) && retrieveGasPrice()) {
+            if (retrieveElectricityPrices() && retrieveGasPrice()) {
                 updateStatus(ThingStatus.ONLINE);
             } else {
                 updateStatus(ThingStatus.OFFLINE);
             }
             var now = LocalDateTime.now();
-            retrieveElectricityPrices(LocalDate.now().plusDays(1));
+            if (now.getHour() >= 21) {
+                retrieveElectricityPrices();
+            }
 
             // update channels
-
+            updateGasChannels();
             updateDailyChannels();
             updateHourlyChannels();
-
-            // schedule get prices next day
-            long nextDailyScheduleInNanos = Duration
-                    .between(now, now.withHour(20).withMinute(10).withSecond(0).withNano(0)).toNanos();
-            dailyJob = scheduler.scheduleWithFixedDelay(this::scheduleDailyPrices, nextDailyScheduleInNanos,
-                    TimeUnit.HOURS.toNanos(12), TimeUnit.NANOSECONDS);
 
             // schedule update channels hourly
             long nextHourlyScheduleInNanos = Duration
                     .between(now, now.plusHours(1).withMinute(0).withSecond(0).withNano(0)).toNanos();
-            hourlyJob = scheduler.scheduleWithFixedDelay(this::scheduleHourlyPrices, nextHourlyScheduleInNanos,
+            hourlyJob = scheduler.scheduleWithFixedDelay(this::updateHourlyChannels, nextHourlyScheduleInNanos,
                     TimeUnit.HOURS.toNanos(1), TimeUnit.NANOSECONDS);
+
+            // schedule get electricity prices next day
+            long nextDayScheduleInNanos = Duration
+                    .between(now, now.withHour(21).withMinute(45).withSecond(0).withNano(0)).toNanos();
+            nextDayJob = scheduler.scheduleWithFixedDelay(this::retrieveElectricityPrices, nextDayScheduleInNanos,
+                    TimeUnit.DAYS.toNanos(1), TimeUnit.NANOSECONDS);
+
+            // schedule update channels daily
+            long nextDailyScheduleInNanos = Duration
+                    .between(now, now.plusDays(1).withHour(0).withMinute(5).withSecond(0).withNano(0)).toNanos();
+            dailyJob = scheduler.scheduleWithFixedDelay(this::updateDailyChannels, nextDailyScheduleInNanos,
+                    TimeUnit.DAYS.toNanos(1), TimeUnit.NANOSECONDS);
+
+            // schedule update gas channels
+            long nextGasScheduleInNanos = Duration
+                    .between(now, now.plusDays(1).withHour(6).withMinute(45).withSecond(0).withNano(0)).toNanos();
+            gasJob = scheduler.scheduleWithFixedDelay(this::scheduleGasPrice, nextGasScheduleInNanos,
+                    TimeUnit.DAYS.toNanos(1), TimeUnit.NANOSECONDS);
         }
+    }
+
+    protected void scheduleGasPrice() {
+        retrieveGasPrice();
+        updateGasChannels();
     }
 
     /**
@@ -153,10 +177,14 @@ public class EneVerHandler extends BaseThingHandler {
         }
     }
 
-    private boolean retrieveElectricityPrices(LocalDate date) {
+    private boolean retrieveElectricityPrices() {
+        var date = LocalDate.now();
 
         if (ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date)) {
-            return true;
+            date = date.plusDays(1);
+            if (ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date)) {
+                return true;
+            }
         }
 
         logger.info("Retrieving prices for " + date);
@@ -166,21 +194,21 @@ public class EneVerHandler extends BaseThingHandler {
             url = "https://enever.nl/apiv3/stroomprijs_morgen.php?token=" + token;
         }
 
-        Payload payload = null;
+        IPayload payload = null;
         if (!debug) {
-            payload = retrievePayload(url);
+            payload = retrievePayload(url, true);
         } else {
             logger.info("Using test electricity data");
-            payload = gson.fromJson(testDataE, Payload.class);
+            payload = gson.fromJson(testDataE, EneVerPayload.class);
         }
 
         if (payload == null) {
-            logger.info("Nothing to retrieve");
-            return false;
+            logger.info("Retrieving backup prices for " + date);
+            return retrieveBackupPrices(date);
         }
 
-        if (payload.getStatus() && (payload.getDate().isEqual(date) || debug)) {
-            var prices = payload.getPrices().stream()
+        if (payload.getStatus() || debug) {
+            var prices = payload.getElectricityPrices().stream()
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
 
@@ -190,32 +218,56 @@ public class EneVerHandler extends BaseThingHandler {
         return payload.getStatus();
     }
 
+    private boolean retrieveBackupPrices(LocalDate date) {
+        String url = "https://www.zonneplan.nl/_next/data/-1MTIpwQhw6uPMo8SUryh/energie/dynamisch-energiecontract.json?slug=energie&slug=dynamisch-energiecontract";
+
+        IPayload payload = null;
+        payload = retrievePayload(url, false);
+
+        if (payload == null) {
+            return false;
+        }
+
+        if (payload.getStatus()) {
+            var prices = payload.getElectricityPrices().stream()
+                    .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
+            ePrices.addPrices(prices);
+            gasPrice = payload.getGasPrices().stream().filter(p -> p.getDatum().isEqual(LocalDate.now())).findFirst()
+                    .orElse(gasPrice);
+
+            logger.info("Retrieved for " + date);
+        }
+
+        return payload.getStatus();
+    }
+
     private boolean retrieveGasPrice() {
+        if (gasPrice.getDatum().isEqual(LocalDate.now())) {
+            return true;
+        }
         String url = "https://enever.nl/apiv3/gasprijs_vandaag.php?token=" + token;
 
-        Payload p = null;
+        IPayload p = null;
         if (!debug) {
-            p = retrievePayload(url);
+            p = retrievePayload(url, true);
         } else {
             logger.debug("Using test gas data");
-            p = gson.fromJson(testDataG, Payload.class);
+            p = gson.fromJson(testDataG, EneVerPayload.class);
         }
 
         if (p == null) {
-            return false;
-        }
-        if (p.getStatus()) {
-            gasPrice = 0;
+            return retrieveBackupPrices(LocalDate.now());
         }
 
-        p.getPrices().forEach((price) -> {
-            gasPrice = price.getPrijs();
-        });
+        p.getGasPrices().stream().filter(price -> price.getDatum().isEqual(LocalDate.now())).findFirst()
+                .ifPresent(price -> {
+                    gasPrice = price;
+                });
 
         return p.getStatus();
     }
 
-    private @Nullable Payload retrievePayload(String url) {
+    private @Nullable IPayload retrievePayload(String url, boolean primary) {
         @Nullable
         String dataResult = null;
         try {
@@ -229,12 +281,15 @@ public class EneVerHandler extends BaseThingHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Device returned empty data");
             return null;
         }
-
-        Payload payload = null;
-        try {
-            payload = gson.fromJson(dataResult, Payload.class);
-        } catch (JsonSyntaxException ex) {
-            logger.debug(dataResult);
+        IPayload payload = null;
+        if (primary) {
+            try {
+                payload = gson.fromJson(dataResult, EneVerPayload.class);
+            } catch (JsonSyntaxException ex) {
+                logger.debug(dataResult);
+            }
+        } else {
+            payload = new ZonneplanPayload(dataResult);
         }
 
         if (payload == null) {
@@ -250,16 +305,22 @@ public class EneVerHandler extends BaseThingHandler {
         return payload;
     }
 
-    private void updateDailyChannels() {
-        var datum = LocalDate.now();
+    private void updateGasChannels() {
+        if (!gasPrice.getDatum().isEqual(LocalDate.now())) {
+            return;
+        }
+        updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice.getPrijs()));
+    }
 
-        updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice));
-        var maxPrice = ePrices.getMaxPrice(LocalDate.now());
+    private void updateDailyChannels() {
+        var now = LocalDate.now();
+
+        var maxPrice = ePrices.getMaxPrice(now);
         if (maxPrice != null) {
             updateState(EneVerBindingConstants.CHANNEL_PEAK_HOUR, new DecimalType(maxPrice.getUur()));
         }
 
-        var average = ePrices.averagePrices.get(datum);
+        var average = ePrices.averagePrices.get(now);
         if (average != null) {
             updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE, new DecimalType(average));
         }
@@ -272,12 +333,6 @@ public class EneVerHandler extends BaseThingHandler {
         var prijs = ePrices.getPriceFor(now);
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(prijs.getPrijs()));
-            prijs = ePrices.getPriceFor(now.plusHours(1));
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1,
-                    new DecimalType(prijs.getPrijs()));
-            prijs = ePrices.getPriceFor(now.plusHours(2));
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2,
-                    new DecimalType(prijs.getPrijs()));
 
             if (prijs.isGoedkoop) {
                 updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("cheap"));
@@ -289,18 +344,17 @@ public class EneVerHandler extends BaseThingHandler {
 
             updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getStatus()));
         }
-    }
+        prijs = ePrices.getPriceFor(now.plusHours(1));
+        if (prijs != null) {
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1,
+                    new DecimalType(prijs.getPrijs()));
+        }
 
-    protected void scheduleDailyPrices() {
-        var today = LocalDate.now();
-        retrieveElectricityPrices(today);
-        retrieveElectricityPrices(today.plusDays(1));
-        retrieveGasPrice();
-        updateDailyChannels();
-    }
-
-    protected void scheduleHourlyPrices() {
-        updateHourlyChannels();
+        prijs = ePrices.getPriceFor(now.plusHours(2));
+        if (prijs != null) {
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2,
+                    new DecimalType(prijs.getPrijs()));
+        }
     }
 
     @Override
@@ -316,5 +370,17 @@ public class EneVerHandler extends BaseThingHandler {
             job.cancel(true);
         }
         hourlyJob = null;
+
+        job = nextDayJob;
+        if (job != null) {
+            job.cancel(true);
+        }
+        nextDayJob = null;
+
+        job = gasJob;
+        if (job != null) {
+            job.cancel(true);
+        }
+        gasJob = null;
     }
 }
