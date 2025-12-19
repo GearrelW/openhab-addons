@@ -102,7 +102,7 @@
 		<command>
 			<options>
 				<option value="solar">Solar</option>
-				<option value="price">Price</option>
+				<option value="prices">Price</option>
 			</options>
 		</command>
 	</channel-type>

@@ -115,7 +115,7 @@ public class EneVerHandler extends BaseThingHandler {
                 updateStatus(ThingStatus.OFFLINE);
             }
             var now = LocalDateTime.now();
-            if (now.getHour() >= 21) {
+            if (now.getHour() >= 20) {
                 retrieveElectricityPrices();
             }
 
@@ -198,8 +198,8 @@ public class EneVerHandler extends BaseThingHandler {
         if (!debug) {
             payload = retrievePayload(url, true);
         } else {
-            logger.info("Using test electricity data");
-            payload = gson.fromJson(testDataE, EneVerPayload.class);
+            logger.info("Using backup electricity data");
+            return retrieveBackupPrices(date);
         }
 
         if (payload == null) {
@@ -211,6 +211,7 @@ public class EneVerHandler extends BaseThingHandler {
             var prices = payload.getElectricityPrices().stream()
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
+            ePrices.processPrices();
 
             logger.info("Retrieved for " + date);
         }
@@ -232,6 +233,7 @@ public class EneVerHandler extends BaseThingHandler {
             var prices = payload.getElectricityPrices().stream()
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
+            ePrices.processPrices();
             gasPrice = payload.getGasPrices().stream().filter(p -> p.getDatum().isEqual(LocalDate.now())).findFirst()
                     .orElse(gasPrice);
 
@@ -342,7 +344,7 @@ public class EneVerHandler extends BaseThingHandler {
                 updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("neutral"));
             }
 
-            updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getStatus()));
+            updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getMode()));
         }
         prijs = ePrices.getPriceFor(now.plusHours(1));
         if (prijs != null) {

@@ -27,7 +27,7 @@ public class EPrice implements Comparable<EPrice> {
 
     private Double prijs = 0.0;
 
-    private String status = "";
+    private String mode = "";
 
     public Boolean isDuur = false;
     public Boolean isGoedkoop = false;
@@ -45,16 +45,20 @@ public class EPrice implements Comparable<EPrice> {
         return datum.toLocalDate();
     }
 
+    public LocalDateTime getDatumTijd() {
+        return datum.withMinute(0).withSecond(0).withNano(0);
+    }
+
     public int getUur() {
         return datum.getHour();
     }
 
-    public String getStatus() {
-        return status;
+    public String getMode() {
+        return mode;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setMode(String status) {
+        this.mode = status;
     }
 
     @Override
@@ -64,7 +68,7 @@ public class EPrice implements Comparable<EPrice> {
 
     @Override
     public String toString() {
-        return "[" + this.getDatum() + " " + this.getUur() + " : " + this.prijs + "(s=" + status + ")]\n";
+        return "[" + this.getDatumTijd() + " : " + this.prijs + "(mode=" + mode + ")]\n";
     }
 
     @Override

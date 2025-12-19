@@ -50,7 +50,6 @@ public class EPrices {
             allPrices.add(new EPrice(entry.getKey(), entry.getValue()));
         });
         allPrices.stream().sorted();
-        processPrices();
     }
 
     public TreeSet<EPrice> getAllPrices() {
@@ -83,35 +82,35 @@ public class EPrices {
     }
 
     private void initModes(List<EPrice> prices) {
-        var avgPrice = averagePrices.get(prices.getFirst().getDatum());
-        prices.stream().forEach(ep -> {
-            if (ep.getPrijs() <= avgPrice) {
-                ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
-            } else {
-                ep.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
-            }
+        for (var entry : averagePrices.entrySet()) {
+            var avgPrice = entry.getValue();
+            var date = entry.getKey();
 
-            if (ep.getPrijs() <= (avgPrice * (1 - treshold))) {
-                ep.isGoedkoop = true;
-            }
-            if (ep.getPrijs() > (avgPrice * (1 + treshold))) {
-                ep.isDuur = true;
-            }
-        });
+            prices.stream().filter(ep -> ep.getMode().isEmpty() && ep.getDatum().equals(date)).forEach(ep -> {
+                if (ep.getPrijs() <= avgPrice) {
+                    ep.setMode(EPrice.ZERO_CHARGE_ONLY);
+                } else {
+                    ep.setMode(EPrice.ZERO_DISCHARGE_ONLY);
+                }
+
+                if (ep.getPrijs() <= (avgPrice * (1 - treshold))) {
+                    ep.isGoedkoop = true;
+                }
+                if (ep.getPrijs() > (avgPrice * (1 + treshold))) {
+                    ep.isDuur = true;
+                }
+            });
+        }
+        // logger.error("initModes: prices " + prices.toString());
     }
 
     public void processPrices() {
+        allPrices.removeIf(eprice -> eprice.getDatum().isBefore(LocalDate.now()));
+        averagePrices.keySet().removeIf(date -> date.isBefore(LocalDate.now()));
+
         averagePrices = allPrices.stream()
                 .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)));
-        var dates = allPrices.stream().filter(ep -> ep.getStatus().isEmpty()).map(EPrice::getDatum).distinct()
-                .collect(Collectors.toList());
-
-        dates.forEach(date -> {
-            setModes(date);
-        });
-
-        allPrices.removeIf(ep -> ep.getDatum().isBefore(LocalDate.now()));
-        averagePrices.keySet().removeIf(d -> d.isBefore(LocalDate.now()));
+        setModes();
     }
 
     public void resetModes() {
@@ -122,9 +121,13 @@ public class EPrices {
         setModes(LocalDateTime.of(date, java.time.LocalTime.MIDNIGHT));
     }
 
+    public void setModes() {
+        setModes(LocalDateTime.now());
+    }
+
     public void setModes(LocalDateTime dateTime) {
-        var myPrices = allPrices.stream()
-                .filter(ep -> ep.getDatum().equals(dateTime.toLocalDate()) && ep.getUur() >= dateTime.getHour())
+        var dt = dateTime.withMinute(0).withSecond(0).withNano(0);
+        var myPrices = allPrices.stream().filter(ep -> ep.getDatumTijd().isAfter(dt) || dt.isEqual(ep.getDatumTijd()))
                 .collect(Collectors.toList());
 
         initModes(myPrices);
@@ -132,15 +135,11 @@ public class EPrices {
         var matches = findMatchingPrices(myPrices);
 
         if (PRICES_CONTROL.equals(controlStrategy)) {
-            if (matches.isEmpty()) {
-                setSolarStatus(myPrices);
-            } else {
-                setPricesStatus(myPrices, matches);
-            }
+            setPricesMode(myPrices, matches);
         } else { // SOLAR_MODE
-            setSolarStatus(myPrices);
+            setSolarMode(myPrices);
         }
-        logger.error("prices " + allPrices.toString());
+        // logger.error("setModes: prices " + allPrices.toString());
     }
 
     private Map<EPrice, EPrice> findMatchingPrices(List<EPrice> prices) {
@@ -167,28 +166,26 @@ public class EPrices {
                         low.remove(l);
                     });
         });
-        logger.error("matches " + matches.toString());
+        logger.error("findMatchingPrices: matches " + matches.toString());
         return matches;
     }
 
-    private void setPricesStatus(List<EPrice> prices, Map<EPrice, EPrice> matches) {
+    private void setPricesMode(List<EPrice> prices, Map<EPrice, EPrice> matches) {
         controlStrategy = PRICES_CONTROL;
-
-        prices.stream().forEach(ep -> ep.setStatus(EPrice.STANDBY));
-
-        matches.forEach((h, l) -> {
-            l.setStatus(EPrice.TO_FULL);
-            h.setStatus(EPrice.ZERO_DISCHARGE_ONLY);
-        });
-
-        var full = prices.stream().filter(l -> l.getStatus().equals(EPrice.TO_FULL)).collect(Collectors.toList());
-        var discharge = prices.stream().filter(l -> l.getStatus().equals(EPrice.ZERO_DISCHARGE_ONLY))
-                .collect(Collectors.toList());
-
-        if (full.isEmpty()) {
-            initModes(prices);
+        if (matches.isEmpty()) {
             return;
         }
+
+        prices.stream().forEach(ep -> ep.setMode(EPrice.STANDBY));
+
+        matches.forEach((h, l) -> {
+            l.setMode(EPrice.TO_FULL);
+            h.setMode(EPrice.ZERO_DISCHARGE_ONLY);
+        });
+
+        var full = prices.stream().filter(l -> l.getMode().equals(EPrice.TO_FULL)).collect(Collectors.toList());
+        var discharge = prices.stream().filter(l -> l.getMode().equals(EPrice.ZERO_DISCHARGE_ONLY))
+                .collect(Collectors.toList());
 
         var firstToFull = full.getFirst().getUur();
         var lastToFull = full.getLast().getUur();
@@ -198,36 +195,38 @@ public class EPrices {
 
         prices.stream().forEach(ep -> {
             if (ep.getUur() > lastToFull && ep.getUur() < firstToDischarge) {
-                ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
+                ep.setMode(EPrice.ZERO_CHARGE_ONLY);
                 return;
             }
             if (ep.getUur() < firstToFull || ep.getUur() > lastToDischarge) {
-                ep.setStatus(EPrice.ZERO);
+                ep.setMode(EPrice.ZERO);
             }
         });
+        logger.error("setPricesMode: " + prices.toString());
     }
 
-    private void setSolarStatus(List<EPrice> prices) {
+    private void setSolarMode(List<EPrice> prices) {
         controlStrategy = SOLAR_CONTROL;
         var date = prices.getFirst().getDatum();
 
         prices.stream().forEach(ep -> {
             if (ep.getUur() < 9) {
-                ep.setStatus(EPrice.ZERO);
+                ep.setMode(EPrice.ZERO);
                 return;
             }
             if (ep.getUur() > 16) {
                 var maxPrice = getMaxPrice(date);
                 if (maxPrice != null && (maxPrice.getUur() - 1) > 16) {
                     if (ep.getUur() < (maxPrice.getUur() - 1)) {
-                        ep.setStatus(EPrice.ZERO_CHARGE_ONLY);
+                        ep.setMode(EPrice.ZERO_CHARGE_ONLY);
                     } else {
-                        ep.setStatus(EPrice.ZERO);
+                        ep.setMode(EPrice.ZERO);
                     }
                 } else {
-                    ep.setStatus(EPrice.ZERO);
+                    ep.setMode(EPrice.ZERO);
                 }
             }
         });
+        logger.error("setSolarMode: " + prices.toString());
     }
 }
