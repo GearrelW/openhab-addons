@@ -35,7 +35,5 @@ public class EneVerConfiguration {
 
     public int warningTreshold = 0;
 
-    public boolean excludeNightlyHours = false;
-
     public boolean debug = false;
 }

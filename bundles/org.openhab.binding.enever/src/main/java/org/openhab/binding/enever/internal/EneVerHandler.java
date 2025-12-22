@@ -76,8 +76,6 @@ public class EneVerHandler extends BaseThingHandler {
 
     private int numberOfHours = 0;
 
-    private boolean excludeNightlyHours = false;
-
     private EPrices ePrices = new EPrices(statusMode, minMaxTreshold, treshold, numberOfHours);
 
     private @Nullable PayloadPriceItem gasPrice = new PayloadPriceItem();
@@ -170,7 +168,6 @@ public class EneVerHandler extends BaseThingHandler {
             token = config.token;
             numberOfHours = config.numberOfHours;
             debug = config.debug;
-            excludeNightlyHours = config.excludeNightlyHours;
             treshold = (double) config.priceTreshold / 100;
             minMaxTreshold = (double) config.minMaxTreshold / 100;
             return true;

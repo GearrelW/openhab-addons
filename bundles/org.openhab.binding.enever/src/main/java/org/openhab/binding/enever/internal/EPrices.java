@@ -117,10 +117,6 @@ public class EPrices {
         setModes(LocalDateTime.now());
     }
 
-    private void setModes(LocalDate date) {
-        setModes(LocalDateTime.of(date, java.time.LocalTime.MIDNIGHT));
-    }
-
     public void setModes() {
         setModes(LocalDateTime.now());
     }
@@ -171,8 +167,8 @@ public class EPrices {
     }
 
     private void setPricesMode(List<EPrice> prices, Map<EPrice, EPrice> matches) {
-        controlStrategy = PRICES_CONTROL;
         if (matches.isEmpty()) {
+            setSolarMode(prices);
             return;
         }
 
@@ -206,7 +202,6 @@ public class EPrices {
     }
 
     private void setSolarMode(List<EPrice> prices) {
-        controlStrategy = SOLAR_CONTROL;
         var date = prices.getFirst().getDatum();
 
         prices.stream().forEach(ep -> {
