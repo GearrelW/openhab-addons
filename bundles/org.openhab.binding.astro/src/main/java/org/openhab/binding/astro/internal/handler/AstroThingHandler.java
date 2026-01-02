@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -75,7 +75,7 @@ public abstract class AstroThingHandler extends BaseThingHandler {
 
     /** Logger Instance */
     private final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private final SimpleDateFormat isoFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private final SimpleDateFormat isoFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT);
 
     /** Scheduler to schedule jobs */
     private final CronScheduler cronScheduler;
@@ -183,6 +183,10 @@ public abstract class AstroThingHandler extends BaseThingHandler {
             final Channel channel = getThing().getChannel(channelUID);
             if (channel == null) {
                 logger.error("Cannot find channel for {}", channelUID);
+                return;
+            }
+            if (channel.getKind() == TRIGGER) {
+                // if the channel is a trigger channel, there is no state to publish
                 return;
             }
             try {

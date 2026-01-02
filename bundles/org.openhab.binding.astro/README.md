@@ -47,6 +47,11 @@ This binding has its own IconProvider and makes available the following list of 
 | oh:astro:zodiac-scorpio     |   Yes   | ![Scorpio](doc/images/zodiac-scorpio.svg) |
 | oh:astro:zodiac-taurus      |   Yes   | ![Taurus](doc/images/zodiac-taurus.svg) |
 | oh:astro:zodiac-virgo       |   Yes   | ![Virgo](doc/images/zodiac-virgo.svg) |
+| oh:astro:season             |   Yes   | ![Season](doc/images/season.svg) |
+| oh:astro:season-autumn      |   Yes   | ![Autumn](doc/images/season-autumn.svg) |
+| oh:astro:season-spring      |   Yes   | ![Spring](doc/images/season-spring.svg) |
+| oh:astro:season-summer      |   Yes   | ![Summer](doc/images/season-summer.svg) |
+| oh:astro:season-winter      |   Yes   | ![Winter](doc/images/season-winter.svg) |
 
 ## Channels
 
@@ -78,6 +83,11 @@ This binding has its own IconProvider and makes available the following list of 
   - **group** `phase`
     - **channel**
       - `name` (String), values: `SUN_RISE, ASTRO_DAWN, NAUTIC_DAWN, CIVIL_DAWN, CIVIL_DUSK, NAUTIC_DUSK, ASTRO_DUSK, SUN_SET, DAYLIGHT, NOON, NIGHT`
+  - **group** `circadian`:  provides automatically calculated values that follow a daily circadian rhythm based on the position of the sun.
+    - **channel**
+      - `brightness` (Dimmer): represents a recommended light brightness level as a percentage. It ranges from **0–100%**, where 0% is fully off and 100% is maximum brightness. The value follows the solar cycle, generally increasing towards **solar noon** and decreasing towards **midnight**.
+      - `temperature` (Number:Temperature): represents a recommended color temperature for white light in **Kelvin**, ranging from **2500 K** (warm white) to **5500 K** (cool white). Around solar noon the value tends towards the higher, cooler temperatures, while during the night and around midnight it shifts towards lower, warmer temperatures.
+
 - **thing** `moon`
   - **group** `rise, set`
     - **channel**
