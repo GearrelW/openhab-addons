@@ -69,14 +69,14 @@ public class EneVerHandler extends BaseThingHandler {
 
     private String token = "";
 
-    private String statusMode = EPrices.SOLAR_CONTROL;
+    private String controlStrategy = EPrices.SOLAR_CONTROL;
 
     private double treshold = 0;
     private double minMaxTreshold = 0;
 
     private int numberOfHours = 0;
 
-    private EPrices ePrices = new EPrices(statusMode, minMaxTreshold, treshold, numberOfHours);
+    private EPrices ePrices = new EPrices(controlStrategy, minMaxTreshold, treshold, numberOfHours);
 
     private @Nullable PayloadPriceItem gasPrice = new PayloadPriceItem();
 
@@ -90,9 +90,12 @@ public class EneVerHandler extends BaseThingHandler {
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY)) {
             if (command.toString().equals(EPrices.SOLAR_CONTROL) || command.toString().equals(EPrices.PRICES_CONTROL)) {
-                statusMode = command.toString();
-                ePrices.controlStrategy = statusMode;
-                ePrices.setModes(LocalDateTime.now());
+                controlStrategy = command.toString();
+                ePrices.controlStrategy = controlStrategy;
+                ePrices.setModes(LocalDateTime.now(), controlStrategy);
+
+                var prijs = ePrices.getPriceFor(LocalDateTime.now());
+                updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getMode()));
             }
         }
     }
@@ -104,7 +107,7 @@ public class EneVerHandler extends BaseThingHandler {
     public void initialize() {
         config = getConfigAs(EneVerConfiguration.class);
         if (configure()) {
-            ePrices = new EPrices(statusMode, minMaxTreshold, treshold, numberOfHours);
+            ePrices = new EPrices(controlStrategy, minMaxTreshold, treshold, numberOfHours);
 
             // get prices for today
             if (retrieveElectricityPrices() && retrieveGasPrice()) {

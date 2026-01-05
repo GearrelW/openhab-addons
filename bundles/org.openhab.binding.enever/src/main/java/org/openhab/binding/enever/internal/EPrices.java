@@ -114,14 +114,14 @@ public class EPrices {
     }
 
     public void resetModes() {
-        setModes(LocalDateTime.now());
+        setModes(LocalDateTime.now(), null);
     }
 
     public void setModes() {
-        setModes(LocalDateTime.now());
+        setModes(LocalDateTime.now(), null);
     }
 
-    public void setModes(LocalDateTime dateTime) {
+    public void setModes(LocalDateTime dateTime, String strategy) {
         var dt = dateTime.withMinute(0).withSecond(0).withNano(0);
         var myPrices = allPrices.stream().filter(ep -> ep.getDatumTijd().isAfter(dt) || dt.isEqual(ep.getDatumTijd()))
                 .collect(Collectors.toList());
@@ -129,6 +129,15 @@ public class EPrices {
         initModes(myPrices);
 
         var matches = findMatchingPrices(myPrices);
+
+        if (strategy == null) {
+            if (matches.isEmpty()) {
+                strategy = SOLAR_CONTROL;
+            } else {
+                strategy = PRICES_CONTROL;
+            }
+        }
+        controlStrategy = strategy;
 
         if (PRICES_CONTROL.equals(controlStrategy)) {
             setPricesMode(myPrices, matches);
