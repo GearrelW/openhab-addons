@@ -14,8 +14,8 @@ package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -148,14 +148,12 @@ public class EPrices {
     }
 
     private Map<EPrice, EPrice> findMatchingPrices(List<EPrice> prices) {
-        var matches = new HashMap<EPrice, EPrice>();
+        var matches = new LinkedHashMap<EPrice, EPrice>();
 
         var low = prices.stream().filter(ep -> ep.isGoedkoop)
-                .sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
-                .collect(Collectors.toList());
+                .sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).collect(Collectors.toList());
         var high = prices.stream().filter(ep -> ep.isDuur)
-                .sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1).limit(numberOfHours)
-                .collect(Collectors.toList());
+                .sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1).collect(Collectors.toList());
 
         if (high.isEmpty() || low.isEmpty()) {
             return matches;
@@ -164,13 +162,17 @@ public class EPrices {
         low.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
         high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
 
-        high.forEach(h -> {
-            low.stream().filter(l -> l.getUur() < h.getUur() && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold))
-                    .findFirst().ifPresent(l -> {
-                        matches.put(h, l);
-                        low.remove(l);
+        for (int i = 0; i < numberOfHours; i++) {
+            var highPrice = high.get(i);
+            low.stream()
+                    .filter(lowPrice -> lowPrice.getUur() < highPrice.getUur()
+                            && highPrice.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
+                    .findFirst().ifPresent(foundLow -> {
+                        matches.put(highPrice, foundLow);
+                        low.remove(foundLow);
                     });
-        });
+        }
+
         logger.error("findMatchingPrices: matches " + matches.toString());
         return matches;
     }
