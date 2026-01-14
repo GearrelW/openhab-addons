@@ -150,14 +150,10 @@ public class EPrices {
     private Map<EPrice, EPrice> findMatchingPrices(List<EPrice> prices) {
         var matches = new LinkedHashMap<EPrice, EPrice>();
 
-        var low = prices.stream().filter(ep -> ep.isGoedkoop)
-                .sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).collect(Collectors.toList());
-        var high = prices.stream().filter(ep -> ep.isDuur)
-                .sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1).collect(Collectors.toList());
-
-        if (high.isEmpty() || low.isEmpty()) {
-            return matches;
-        }
+        var low = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
+                .collect(Collectors.toList());
+        var high = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1)
+                .collect(Collectors.toList());
 
         low.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
         high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
