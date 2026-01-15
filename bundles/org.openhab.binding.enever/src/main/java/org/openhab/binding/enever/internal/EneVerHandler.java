@@ -333,6 +333,10 @@ public class EneVerHandler extends BaseThingHandler {
         var now = LocalDateTime.now();
         logger.debug("updating channels for " + now);
         var prijs = ePrices.getPriceFor(now);
+        if (prijs == null) {
+            retrieveElectricityPrices();
+            prijs = ePrices.getPriceFor(now);
+        }
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(prijs.getPrijs()));
 

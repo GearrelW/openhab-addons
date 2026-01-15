@@ -117,7 +117,7 @@ public class EPrices {
         setModes(LocalDateTime.now(), null);
     }
 
-    public void setModes() {
+    private void setModes() {
         setModes(LocalDateTime.now(), null);
     }
 
@@ -158,6 +158,10 @@ public class EPrices {
         low.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
         high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
 
+        if (high.size() < numberOfHours) {
+            return matches;
+        }
+
         for (int i = 0; i < numberOfHours; i++) {
             var highPrice = high.get(i);
             low.stream()
@@ -169,7 +173,7 @@ public class EPrices {
                     });
         }
 
-        logger.error("findMatchingPrices: matches " + matches.toString());
+        // logger.error("findMatchingPrices: matches " + matches.toString());
         return matches;
     }
 
