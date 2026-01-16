@@ -133,7 +133,7 @@ public class EneVerHandler extends BaseThingHandler {
 
             // schedule get electricity prices next day
             long nextDayScheduleInNanos = Duration
-                    .between(now, now.withHour(21).withMinute(45).withSecond(0).withNano(0)).toNanos();
+                    .between(now, now.withHour(21).withMinute(55).withSecond(0).withNano(0)).toNanos();
             nextDayJob = scheduler.scheduleWithFixedDelay(this::retrieveElectricityPrices, nextDayScheduleInNanos,
                     TimeUnit.DAYS.toNanos(1), TimeUnit.NANOSECONDS);
 
@@ -212,6 +212,9 @@ public class EneVerHandler extends BaseThingHandler {
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
             ePrices.processPrices();
+
+            updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY,
+                    new StringType(ePrices.controlStrategy));
 
             logger.info("Retrieved for " + date);
         }
