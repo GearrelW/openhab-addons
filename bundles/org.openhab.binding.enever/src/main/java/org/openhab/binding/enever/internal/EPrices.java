@@ -14,6 +14,7 @@ package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -150,28 +151,37 @@ public class EPrices {
     private Map<EPrice, EPrice> findMatchingPrices(List<EPrice> prices) {
         var matches = new LinkedHashMap<EPrice, EPrice>();
 
-        var low = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
-                .collect(Collectors.toList());
-        var high = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1)
-                .collect(Collectors.toList());
+        var highs = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1)
+                .filter(h -> prices.stream()
+                        .anyMatch(l -> l.getUur() < h.getUur() && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold)))
+                .limit(numberOfHours).collect(Collectors.toList());
 
-        low.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
-        high.sort((p1, p2) -> p1.getPrijs() < p2.getPrijs() ? 1 : -1);
-
-        if (high.size() < numberOfHours) {
-            return matches;
+        var highsWithLows = new LinkedHashMap<EPrice, List<EPrice>>();
+        for (EPrice h : highs) {
+            var lows = prices.stream().filter(lowPrice -> lowPrice.getUur() < h.getUur()
+                    && h.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold)).collect(Collectors.toList());
+            if (!lows.isEmpty()) {
+                highsWithLows.put(h, lows);
+            }
         }
 
-        for (int i = 0; i < numberOfHours; i++) {
-            var highPrice = high.get(i);
-            low.stream()
-                    .filter(lowPrice -> lowPrice.getUur() < highPrice.getUur()
-                            && highPrice.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
-                    .findFirst().ifPresent(foundLow -> {
-                        matches.put(highPrice, foundLow);
-                        low.remove(foundLow);
-                    });
-        }
+        highsWithLows = highsWithLows.entrySet().stream()
+                .sorted((hl1, hl2) -> hl1.getValue().size() > hl2.getValue().size() ? 1 : -1).collect(Collectors.toMap(
+                        Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
+
+        var chosenLows = new ArrayList<EPrice>();
+        highsWithLows.forEach((k, v) -> {
+            var sortedLows = v.stream().sorted((l1, l2) -> l1.getPrijs() > l2.getPrijs() ? 1 : -1)
+                    .collect(Collectors.toList());
+            for (var lowPrice : sortedLows) {
+                if (!chosenLows.contains(lowPrice)) {
+                    matches.put(k, lowPrice);
+                    chosenLows.add(lowPrice);
+                    break;
+                }
+            }
+
+        });
 
         // logger.error("findMatchingPrices: matches " + matches.toString());
         return matches;
