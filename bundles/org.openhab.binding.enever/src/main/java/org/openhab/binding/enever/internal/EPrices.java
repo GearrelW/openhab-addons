@@ -38,7 +38,9 @@ public class EPrices {
     private Double treshold = 0.15;
     private Double minMaxTreshold = 0.4;
     private int numberOfHours = 2;
+    private LocalDateTime lastControlledDateTime = LocalDateTime.now().minusDays(1);
     public Map<LocalDate, Double> averagePrices = new Hashtable<>();
+    public Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
 
     public EPrices(String controlStrategy, Double minMaxTreshold, Double priceTreshold, int numberOfHours) {
         this.controlStrategy = controlStrategy;
@@ -66,11 +68,6 @@ public class EPrices {
         return allPrices.stream()
                 .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
                 .findFirst().orElse(null);
-    }
-
-    public EPrice getMaxPrice(LocalDate date) {
-        return allPrices.stream().filter(ep -> ep.getDatum().equals(date))
-                .max((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())).orElse(null);
     }
 
     public List<EPrice> getCheapPrices(LocalDateTime date, int limit) {
@@ -107,12 +104,26 @@ public class EPrices {
     }
 
     public void processPrices() {
-        allPrices.removeIf(eprice -> eprice.getDatum().isBefore(LocalDate.now()));
-        averagePrices.keySet().removeIf(date -> date.isBefore(LocalDate.now()));
+        if (LocalDateTime.now().isAfter(lastControlledDateTime)) {
+            allPrices.removeIf(eprice -> eprice.getDatum().isBefore(LocalDate.now()));
+            averagePrices.keySet().removeIf(date -> date.isBefore(LocalDate.now()));
 
-        averagePrices = allPrices.stream()
-                .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)));
-        setModes();
+            allPrices.stream()
+                    .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)))
+                    .forEach((date, avg) -> {
+                        if (!averagePrices.containsKey(date)) {
+                            averagePrices.put(date, avg);
+                        }
+                    });
+            allPrices.stream()
+                    .collect(Collectors.groupingBy(EPrice::getDatum,
+                            Collectors.maxBy((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs()))))
+                    .forEach((date, max) -> {
+                        maxPrices.put(date, max.get());
+                    });
+            setModes();
+            logger.info("Next control after: " + lastControlledDateTime);
+        }
     }
 
     public void resetModes() {
@@ -216,7 +227,7 @@ public class EPrices {
             chosenEnd = chosenHighs.toString();
         } while (chosenStart.equals(chosenEnd) == false);
 
-        logger.error("findMatchingPrices: matches " + matches.toString());
+        // logger.error("findMatchingPrices: matches " + matches.toString());
         return matches;
     }
 
@@ -252,19 +263,19 @@ public class EPrices {
                 ep.setMode(EPrice.ZERO);
             }
         });
-        logger.error("setPricesMode: " + prices.toString());
+
+        lastControlledDateTime = full.getLast().getDatumTijd();
+        logger.info("setPricesMode: " + prices.toString());
     }
 
     private void setSolarMode(List<EPrice> prices) {
-        var date = prices.getFirst().getDatum();
-
         prices.stream().forEach(ep -> {
             if (ep.getUur() < 9) {
                 ep.setMode(EPrice.ZERO);
                 return;
             }
             if (ep.getUur() > 16) {
-                var maxPrice = getMaxPrice(date);
+                var maxPrice = maxPrices.get(ep.getDatum());
                 if (maxPrice != null && (maxPrice.getUur() - 1) > 16) {
                     if (ep.getUur() < (maxPrice.getUur() - 1)) {
                         ep.setMode(EPrice.ZERO_CHARGE_ONLY);
@@ -276,6 +287,13 @@ public class EPrices {
                 }
             }
         });
-        logger.error("setSolarMode: " + prices.toString());
+        try {
+            lastControlledDateTime = prices.stream().filter(ep -> !ep.getMode().equals(EPrice.ZERO))
+                    .collect(Collectors.toList()).getLast().getDatumTijd();
+        } catch (Exception e) {
+            // lastControlledDateTime = LocalDateTime.now().plusDays(1).withHour(0);
+        }
+
+        logger.info("setSolarMode: " + prices.toString());
     }
 }

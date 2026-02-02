@@ -133,9 +133,9 @@ public class EneVerHandler extends BaseThingHandler {
 
             // schedule get electricity prices next day
             long nextDayScheduleInNanos = Duration
-                    .between(now, now.withHour(21).withMinute(55).withSecond(0).withNano(0)).toNanos();
+                    .between(now, now.plusHours(1).withMinute(15).withSecond(0).withNano(0)).toNanos();
             nextDayJob = scheduler.scheduleWithFixedDelay(this::retrieveElectricityPrices, nextDayScheduleInNanos,
-                    TimeUnit.DAYS.toNanos(1), TimeUnit.NANOSECONDS);
+                    TimeUnit.HOURS.toNanos(1), TimeUnit.NANOSECONDS);
 
             // schedule update channels daily
             long nextDailyScheduleInNanos = Duration
@@ -182,7 +182,10 @@ public class EneVerHandler extends BaseThingHandler {
 
         if (ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date)) {
             date = date.plusDays(1);
-            if (ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date)) {
+            if ((ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date))
+                    || LocalDateTime.now().getHour() < 14) {
+
+                ePrices.processPrices();
                 return true;
             }
         }
@@ -320,7 +323,7 @@ public class EneVerHandler extends BaseThingHandler {
     private void updateDailyChannels() {
         var now = LocalDate.now();
 
-        var maxPrice = ePrices.getMaxPrice(now);
+        var maxPrice = ePrices.maxPrices.get(now);
         if (maxPrice != null) {
             updateState(EneVerBindingConstants.CHANNEL_PEAK_HOUR, new DecimalType(maxPrice.getUur()));
         }
