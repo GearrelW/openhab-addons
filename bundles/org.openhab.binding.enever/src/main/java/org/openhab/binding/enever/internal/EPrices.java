@@ -248,23 +248,23 @@ public class EPrices {
         var discharge = prices.stream().filter(l -> l.getMode().equals(EPrice.ZERO_DISCHARGE_ONLY))
                 .collect(Collectors.toList());
 
-        var firstToFull = full.getFirst().getUur();
-        var lastToFull = full.getLast().getUur();
+        var firstToFull = full.getFirst();
+        var lastToFull = full.getLast();
 
-        var firstToDischarge = discharge.getFirst().getUur();
-        var lastToDischarge = discharge.getLast().getUur();
+        var firstToDischarge = discharge.getFirst();
+        var lastToDischarge = discharge.getLast();
 
         prices.stream().forEach(ep -> {
-            if (ep.getUur() > lastToFull && ep.getUur() < firstToDischarge) {
+            if (ep.getUur() > lastToFull.getUur() && ep.getUur() < firstToDischarge.getUur()) {
                 ep.setMode(EPrice.ZERO_CHARGE_ONLY);
                 return;
             }
-            if (ep.getUur() < firstToFull || ep.getUur() > lastToDischarge) {
+            if (ep.getUur() < firstToFull.getUur() || ep.getUur() > lastToDischarge.getUur()) {
                 ep.setMode(EPrice.ZERO);
             }
         });
 
-        lastControlledDateTime = full.getLast().getDatumTijd();
+        lastControlledDateTime = lastToDischarge.getDatumTijd();
         logger.info("setPricesMode: " + prices.toString());
     }
 
