@@ -165,7 +165,8 @@ public class EPrices {
 
         var lowPrices = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? -1 : 1)
                 .filter(l -> prices.stream()
-                        .anyMatch(h -> h.getUur() > l.getUur() && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold)))
+                        .anyMatch(h -> h.getDatumTijd().isAfter(l.getDatumTijd())
+                                && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold)))
                 .limit(numberOfHours).collect(Collectors.toList());
 
         // logger.error("findMatchingPrices: lowPrices " + lowPrices.toString());
@@ -173,7 +174,7 @@ public class EPrices {
         var lowsWithHighs = new LinkedHashMap<EPrice, List<EPrice>>();
         for (EPrice l : lowPrices) {
             var his = prices.stream()
-                    .filter(highPrice -> highPrice.getUur() > l.getUur()
+                    .filter(highPrice -> highPrice.getDatumTijd().isAfter(l.getDatumTijd())
                             && highPrice.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold))
                     .collect(Collectors.toList());
             if (!his.isEmpty()) {
@@ -255,11 +256,13 @@ public class EPrices {
         var lastToDischarge = discharge.getLast();
 
         prices.stream().forEach(ep -> {
-            if (ep.getUur() > lastToFull.getUur() && ep.getUur() < firstToDischarge.getUur()) {
+            if (ep.getDatumTijd().isAfter(lastToFull.getDatumTijd())
+                    && ep.getDatumTijd().isBefore(firstToDischarge.getDatumTijd())) {
                 ep.setMode(EPrice.ZERO_CHARGE_ONLY);
                 return;
             }
-            if (ep.getUur() < firstToFull.getUur() || ep.getUur() > lastToDischarge.getUur()) {
+            if (ep.getDatumTijd().isBefore(firstToFull.getDatumTijd())
+                    || ep.getDatumTijd().isAfter(lastToDischarge.getDatumTijd())) {
                 ep.setMode(EPrice.ZERO);
             }
         });
