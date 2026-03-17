@@ -161,7 +161,7 @@ public class EPrices {
     }
 
     private LinkedHashMap<EPrice, LinkedList<EPrice>> findMatchingPrices(List<EPrice> prices) {
-        var matches = new LinkedHashMap<EPrice, LinkedList<EPrice>>();
+        var potentialMatches = new LinkedHashMap<EPrice, LinkedList<EPrice>>();
 
         var lowPrices = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? -1 : 1)
                 .filter(l -> prices.stream()
@@ -184,13 +184,13 @@ public class EPrices {
         }
 
         lowsWithHighs.forEach((k, v) -> {
-            matches.put(k, new LinkedList<>());
+            potentialMatches.put(k, new LinkedList<>());
         });
 
         var chosenHighs = new ArrayList<EPrice>();
 
         lowsWithHighs.forEach((low, highsForLow) -> {
-            var match = matches.get(low);
+            var match = potentialMatches.get(low);
             var numberOfChosenHighs = 0;
 
             for (int h = 0; h < highsForLow.size(); h++) {
@@ -210,7 +210,7 @@ public class EPrices {
             chosenStart = chosenEnd;
 
             lowsWithHighs.forEach((low, highsForLow) -> {
-                var match = matches.get(low);
+                var match = potentialMatches.get(low);
                 var numberOfChosenHighs = 0;
 
                 for (int h = 0; h < highsForLow.size(); h++) {
@@ -227,6 +227,13 @@ public class EPrices {
             });
             chosenEnd = chosenHighs.toString();
         } while (chosenStart.equals(chosenEnd) == false);
+
+        var matches = new LinkedHashMap<EPrice, LinkedList<EPrice>>();
+        potentialMatches.forEach((low, highsForLow) -> {
+            if (!highsForLow.isEmpty()) {
+                matches.put(low, highsForLow);
+            }
+        });
 
         // logger.error("findMatchingPrices: matches " + matches.toString());
         return matches;
