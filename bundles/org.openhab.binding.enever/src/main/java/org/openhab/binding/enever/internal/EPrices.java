@@ -14,7 +14,7 @@ package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -121,7 +121,7 @@ public class EPrices {
                     .forEach((date, max) -> {
                         maxPrices.put(date, max.get());
                     });
-            setModes();
+            setModes(LocalDateTime.now().withHour(0).withMinute(0), null);
             logger.info("Next control after: " + lastControlledDateTime);
         }
     }
@@ -163,70 +163,34 @@ public class EPrices {
     private LinkedHashMap<EPrice, LinkedList<EPrice>> findMatchingPrices(List<EPrice> prices) {
         var potentialMatches = new LinkedHashMap<EPrice, LinkedList<EPrice>>();
 
-        var lowPrices = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? -1 : 1)
-                .filter(l -> prices.stream()
-                        .anyMatch(h -> h.getDatumTijd().isAfter(l.getDatumTijd())
-                                && h.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold)))
-                .limit(numberOfHours).collect(Collectors.toList());
+        var highPrices = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1)
+                .filter(high -> prices.stream()
+                        .anyMatch(low -> low.getDatumTijd().isBefore(high.getDatumTijd())
+                                && high.getPrijs() >= low.getPrijs() * (1 + minMaxTreshold)))
+                .collect(Collectors.toList());
 
-        // logger.error("findMatchingPrices: lowPrices " + lowPrices.toString());
-
-        var lowsWithHighs = new LinkedHashMap<EPrice, List<EPrice>>();
-        for (EPrice l : lowPrices) {
-            var his = prices.stream()
-                    .filter(highPrice -> highPrice.getDatumTijd().isAfter(l.getDatumTijd())
-                            && highPrice.getPrijs() >= l.getPrijs() * (1 + minMaxTreshold))
+        var morningHighs = new LinkedHashMap<EPrice, List<EPrice>>();
+        var afternoonHighs = new LinkedHashMap<EPrice, List<EPrice>>();
+        for (EPrice high : highPrices) {
+            var lows = prices.stream()
+                    .filter(lowPrice -> lowPrice.getDatumTijd().isBefore(high.getDatumTijd())
+                            && high.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
                     .collect(Collectors.toList());
-            if (!his.isEmpty()) {
-                lowsWithHighs.put(l, his.stream().sorted((h1, h2) -> h1.getPrijs() < h2.getPrijs() ? -1 : 1)
-                        .collect(Collectors.toList()));
+            if (!lows.isEmpty()) {
+                if (high.getUur() <= 12 && morningHighs.size() < 4) {
+                    morningHighs.put(high, lows.stream().sorted((h1, h2) -> h1.getPrijs() < h2.getPrijs() ? -1 : 1)
+                            .collect(Collectors.toList()));
+                }
+                if (high.getUur() > 12) {
+                    afternoonHighs.put(high, lows.stream().sorted((h1, h2) -> h1.getPrijs() < h2.getPrijs() ? -1 : 1)
+                            .collect(Collectors.toList()));
+                }
+
             }
         }
 
-        lowsWithHighs.forEach((k, v) -> {
-            potentialMatches.put(k, new LinkedList<>());
-        });
-
-        var chosenHighs = new ArrayList<EPrice>();
-
-        lowsWithHighs.forEach((low, highsForLow) -> {
-            var match = potentialMatches.get(low);
-            var numberOfChosenHighs = 0;
-
-            for (int h = 0; h < highsForLow.size(); h++) {
-                var high = highsForLow.get(h);
-                if (!chosenHighs.contains(high) && numberOfChosenHighs < 2) {
-                    match.add(high);
-                    chosenHighs.add(high);
-                    numberOfChosenHighs++;
-                }
-            }
-        });
-
-        String chosenStart = chosenHighs.toString();
-        String chosenEnd = "";
-
-        do {
-            chosenStart = chosenEnd;
-
-            lowsWithHighs.forEach((low, highsForLow) -> {
-                var match = potentialMatches.get(low);
-                var numberOfChosenHighs = 0;
-
-                for (int h = 0; h < highsForLow.size(); h++) {
-                    var high = highsForLow.get(h);
-                    if (!chosenHighs.contains(high) && numberOfChosenHighs < 1) {
-                        var removed = match.remove(0);
-                        match.add(high);
-                        chosenHighs.remove(removed);
-                        chosenHighs.add(high);
-                        highsForLow.remove(removed);
-                        numberOfChosenHighs++;
-                    }
-                }
-            });
-            chosenEnd = chosenHighs.toString();
-        } while (chosenStart.equals(chosenEnd) == false);
+        selectMatches(potentialMatches, morningHighs, Arrays.asList());
+        selectMatches(potentialMatches, afternoonHighs, Arrays.asList());
 
         var matches = new LinkedHashMap<EPrice, LinkedList<EPrice>>();
         potentialMatches.forEach((low, highsForLow) -> {
@@ -237,6 +201,85 @@ public class EPrices {
 
         // logger.error("findMatchingPrices: matches " + matches.toString());
         return matches;
+    }
+
+    private void selectMatches(LinkedHashMap<EPrice, LinkedList<EPrice>> potentialMatches,
+            Map<EPrice, List<EPrice>> highsWithLows, List<Integer> excludedLows) {
+        highsWithLows.forEach((k, v) -> {
+            potentialMatches.put(k, new LinkedList<>());
+        });
+
+        logger.error("selectMatches: highsWithLows " + highsWithLows.toString());
+        var chosenLows = new LinkedHashMap<EPrice, Integer>();
+        var numberOfLows = new LinkedHashMap<EPrice, Integer>();
+
+        logger.error("Going for: " + highsWithLows.keySet().size() / 2 + " lows");
+
+        highsWithLows.forEach((high, lowsForHigh) -> {
+            lowsForHigh.forEach(low -> {
+                if (!excludedLows.contains(low.getUur())) {
+                    if (numberOfLows.containsKey(low)) {
+                        numberOfLows.put(low, numberOfLows.get(low) + 1);
+                    } else {
+                        numberOfLows.put(low, 1);
+                    }
+                }
+            });
+        });
+
+        // logger.error("numberOfLows " + numberOfLows.toString());
+
+        var chosenStart = "";
+        // do {
+        // chosenStart = chosenLows.toString();
+        // highsWithLows.forEach((high, lowsForHigh) -> {
+        // var match = potentialMatches.get(high);
+        // var numberOfChosenLows = 0;
+
+        // logger.error("lowsForHigh: " + lowsForHigh.toString());
+
+        // for (int h = lowsForHigh.size() - 1; h >= 0; h--) {
+        // var low = lowsForHigh.get(h);
+        // if (!chosenLows.containsKey(low)) {
+        // match.add(low);
+        // chosenLows.put(low, 1);
+        // numberOfChosenLows++;
+        // break;
+        // } else {
+        // if (chosenLows.get(low) < 2) {
+        // match.add(low);
+        // chosenLows.put(low, chosenLows.get(low) + 1);
+        // numberOfChosenLows++;
+        // break;
+        // }
+        // }
+        // }
+        // });
+        // } while (chosenStart != chosenLows.toString());
+
+        String chosenEnd = "";
+
+        // do {
+        // chosenStart = chosenEnd;
+
+        // highsWithLows.forEach((low, highsForLow) -> {
+        // var match = potentialMatches.get(low);
+        // var numberOfChosenHighs = 0;
+
+        // for (int h = 0; h < highsForLow.size(); h++) {
+        // var high = highsForLow.get(h);
+        // if (!chosenLows.contains(high) && numberOfChosenHighs < 1) {
+        // var removed = match.remove(0);
+        // match.add(high);
+        // chosenLows.remove(removed);
+        // chosenLows.add(high);
+        // highsForLow.remove(removed);
+        // numberOfChosenHighs++;
+        // }
+        // }
+        // });
+        // chosenEnd = chosenLows.toString();
+        // } while (chosenStart.equals(chosenEnd) == false);
     }
 
     private void setPricesMode(List<EPrice> prices, LinkedHashMap<EPrice, LinkedList<EPrice>> matches) {
@@ -275,7 +318,7 @@ public class EPrices {
         });
 
         lastControlledDateTime = lastToDischarge.getDatumTijd();
-        logger.info("setPricesMode: " + prices.toString());
+        // logger.info("setPricesMode: " + prices.toString());
     }
 
     private void setSolarMode(List<EPrice> prices) {
