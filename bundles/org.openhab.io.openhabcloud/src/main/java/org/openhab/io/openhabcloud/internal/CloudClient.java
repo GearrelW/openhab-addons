@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,6 +35,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.eclipse.jdt.annotation.Nullable;
@@ -510,14 +512,16 @@ public class CloudClient {
 
             Iterator<String> queryIterator = requestQueryJson.keys();
             // Add query parameters to URI builder, if any
-            newPath += "?";
-            while (queryIterator.hasNext()) {
-                String queryName = queryIterator.next();
-                newPath += queryName;
-                newPath += "=";
-                newPath += URLEncoder.encode(requestQueryJson.getString(queryName), "UTF-8");
-                if (queryIterator.hasNext()) {
-                    newPath += "&";
+            if (queryIterator.hasNext()) {
+                newPath += "?";
+                while (queryIterator.hasNext()) {
+                    String queryName = queryIterator.next();
+                    newPath += queryName;
+                    newPath += "=";
+                    newPath += URLEncoder.encode(requestQueryJson.getString(queryName), "UTF-8");
+                    if (queryIterator.hasNext()) {
+                        newPath += "&";
+                    }
                 }
             }
             // Finally get the future request URI
@@ -871,6 +875,62 @@ public class CloudClient {
     }
 
     /**
+     * Register a webhook with the openHAB Cloud for the given local path.
+     *
+     * @param localPath the local path to forward webhook requests to
+     * @param future the future to complete with the webhook URL or an error
+     */
+    public void registerWebhook(String localPath, CompletableFuture<String> future) {
+        emitWebhookEvent("webhook:register", localPath, future, response -> response.getString("webhookUrl"),
+                "Webhook registration timed out");
+    }
+
+    /**
+     * Remove a webhook from the openHAB Cloud for the given local path.
+     *
+     * @param localPath the local path whose webhook should be removed
+     * @param future the future to complete when the webhook is removed or on error
+     */
+    public void removeWebhook(String localPath, CompletableFuture<Void> future) {
+        emitWebhookEvent("webhook:remove", localPath, future, response -> null, "Webhook removal timed out");
+    }
+
+    private <T> void emitWebhookEvent(String eventName, String localPath, CompletableFuture<T> future,
+            Function<JSONObject, T> successHandler, String timeoutMessage) {
+        if (!isConnected()) {
+            future.completeExceptionally(new IOException("Not connected to openHAB Cloud"));
+            return;
+        }
+        try {
+            JSONObject data = new JSONObject();
+            data.put("localPath", localPath);
+            socket.emit(eventName, data, (io.socket.client.Ack) args -> {
+                try {
+                    if (args == null || args.length == 0 || !(args[0] instanceof JSONObject)) {
+                        future.completeExceptionally(new IOException("Missing or invalid response from openHAB Cloud"));
+                        return;
+                    }
+                    JSONObject response = (JSONObject) args[0];
+                    if (response.optBoolean("success")) {
+                        future.complete(successHandler.apply(response));
+                    } else {
+                        future.completeExceptionally(new IOException(response.optString("error", "Unknown error")));
+                    }
+                } catch (JSONException | ClassCastException e) {
+                    future.completeExceptionally(new IOException("Invalid response from cloud", e));
+                }
+            });
+            scheduler.schedule(() -> {
+                if (!future.isDone()) {
+                    future.completeExceptionally(new IOException(timeoutMessage));
+                }
+            }, 30, TimeUnit.SECONDS);
+        } catch (JSONException e) {
+            future.completeExceptionally(new IOException("Failed to build webhook request", e));
+        }
+    }
+
+    /**
      * Returns true if openHAB Cloud connection is active
      */
     public boolean isConnected() {
@@ -991,9 +1051,10 @@ public class CloudClient {
                         try {
                             HttpConversation conversation = request.getConversation();
                             EndPoint endPoint = (EndPoint) conversation.getAttribute(EndPoint.class.getName());
-                            if (endPoint == null)
+                            if (endPoint == null) {
                                 throw new HttpResponseException("Upgrade without " + EndPoint.class.getSimpleName(),
                                         response);
+                            }
                             OpenHABWebSocketConnection ohWebSocketConnection = new OpenHABWebSocketConnection(requestId,
                                     endPoint, response, ioSocketSupplier, client);
                             websocketConnections.put(request, ohWebSocketConnection);
@@ -1221,15 +1282,17 @@ public class CloudClient {
 
         private void acquireNetworkBuffer() {
             try (var l = lock.lock()) {
-                if (networkBuffer == null)
+                if (networkBuffer == null) {
                     networkBuffer = new RetainableByteBuffer(byteBufferPool, getInputBufferSize());
+                }
             }
         }
 
         private void releaseNetworkBuffer() {
             try (var l = lock.lock()) {
-                if (networkBuffer == null)
+                if (networkBuffer == null) {
                     throw new IllegalStateException();
+                }
                 networkBuffer.release();
                 networkBuffer = null;
             }
