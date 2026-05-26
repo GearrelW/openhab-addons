@@ -25,7 +25,6 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.enever.internal.payloads.EneVerPayload;
 import org.openhab.binding.enever.internal.payloads.IPayload;
 import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
-import org.openhab.binding.enever.internal.payloads.ZonneplanPayload;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.StringType;
@@ -76,7 +75,7 @@ public class EneVerHandler extends BaseThingHandler {
 
     private int numberOfHours = 0;
 
-    private EPrices ePrices = new EPrices(controlStrategy, minMaxTreshold, treshold, numberOfHours);
+    private EPrices ePrices = new EPrices(minMaxTreshold, treshold, numberOfHours);
 
     private @Nullable PayloadPriceItem gasPrice = new PayloadPriceItem();
 
@@ -88,16 +87,16 @@ public class EneVerHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY)) {
-            if (command.toString().equals(EPrices.SOLAR_CONTROL) || command.toString().equals(EPrices.PRICES_CONTROL)) {
-                controlStrategy = command.toString();
-                ePrices.controlStrategy = controlStrategy;
-                ePrices.setModes(LocalDateTime.now(), controlStrategy);
+        // if (channelUID.getId().equals(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY)) {
+        // if (command.toString().equals(EPrices.SOLAR_CONTROL) || command.toString().equals(EPrices.PRICES_CONTROL)) {
+        // controlStrategy = command.toString();
+        // ePrices.controlStrategy = controlStrategy;
+        // ePrices.setModes(controlStrategy);
 
-                var prijs = ePrices.getPriceFor(LocalDateTime.now());
-                updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getMode()));
-            }
-        }
+        // var prijs = ePrices.getPriceFor(LocalDateTime.now());
+        // updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getMode()));
+        // }
+        // }
     }
 
     /**
@@ -107,7 +106,7 @@ public class EneVerHandler extends BaseThingHandler {
     public void initialize() {
         config = getConfigAs(EneVerConfiguration.class);
         if (configure()) {
-            ePrices = new EPrices(controlStrategy, minMaxTreshold, treshold, numberOfHours);
+            ePrices = new EPrices(minMaxTreshold, treshold, numberOfHours);
 
             // get prices for today
             if (retrieveElectricityPrices() && retrieveGasPrice()) {
@@ -185,7 +184,7 @@ public class EneVerHandler extends BaseThingHandler {
             if ((ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date))
                     || LocalDateTime.now().getHour() < 14) {
 
-                ePrices.processPrices();
+                // ePrices.processPrices();
                 return true;
             }
         }
@@ -199,49 +198,23 @@ public class EneVerHandler extends BaseThingHandler {
 
         IPayload payload = null;
         if (!debug) {
-            payload = retrievePayload(url, true);
+            payload = retrievePayload(url);
         } else {
-            logger.info("Using backup electricity data");
-            return retrieveBackupPrices(date);
+            return false;
         }
 
         if (payload == null) {
-            logger.info("Retrieving backup prices for " + date);
-            return retrieveBackupPrices(date);
+            return false;
         }
 
         if (payload.getStatus() || debug) {
             var prices = payload.getElectricityPrices().stream()
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
-            ePrices.processPrices();
+            // ePrices.processPrices();
 
             updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY,
                     new StringType(ePrices.controlStrategy));
-
-            logger.info("Retrieved for " + date);
-        }
-
-        return payload.getStatus();
-    }
-
-    private boolean retrieveBackupPrices(LocalDate date) {
-        String url = "https://www.zonneplan.nl/_next/data/-1MTIpwQhw6uPMo8SUryh/energie/dynamisch-energiecontract.json?slug=energie&slug=dynamisch-energiecontract";
-
-        IPayload payload = null;
-        payload = retrievePayload(url, false);
-
-        if (payload == null) {
-            return false;
-        }
-
-        if (payload.getStatus()) {
-            var prices = payload.getElectricityPrices().stream()
-                    .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
-            ePrices.addPrices(prices);
-            ePrices.processPrices();
-            gasPrice = payload.getGasPrices().stream().filter(p -> p.getDatum().isEqual(LocalDate.now())).findFirst()
-                    .orElse(gasPrice);
 
             logger.info("Retrieved for " + date);
         }
@@ -257,14 +230,14 @@ public class EneVerHandler extends BaseThingHandler {
 
         IPayload p = null;
         if (!debug) {
-            p = retrievePayload(url, true);
+            p = retrievePayload(url);
         } else {
             logger.debug("Using test gas data");
             p = gson.fromJson(testDataG, EneVerPayload.class);
         }
 
         if (p == null) {
-            return retrieveBackupPrices(LocalDate.now());
+            return false;
         }
 
         p.getGasPrices().stream().filter(price -> price.getDatum().isEqual(LocalDate.now())).findFirst()
@@ -275,7 +248,7 @@ public class EneVerHandler extends BaseThingHandler {
         return p.getStatus();
     }
 
-    private @Nullable IPayload retrievePayload(String url, boolean primary) {
+    private @Nullable IPayload retrievePayload(String url) {
         @Nullable
         String dataResult = null;
         try {
@@ -290,14 +263,10 @@ public class EneVerHandler extends BaseThingHandler {
             return null;
         }
         IPayload payload = null;
-        if (primary) {
-            try {
-                payload = gson.fromJson(dataResult, EneVerPayload.class);
-            } catch (JsonSyntaxException ex) {
-                logger.debug(dataResult);
-            }
-        } else {
-            payload = new ZonneplanPayload(dataResult);
+        try {
+            payload = gson.fromJson(dataResult, EneVerPayload.class);
+        } catch (JsonSyntaxException ex) {
+            logger.debug(dataResult);
         }
 
         if (payload == null) {

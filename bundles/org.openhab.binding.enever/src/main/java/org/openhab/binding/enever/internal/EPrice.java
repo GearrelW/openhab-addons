@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 
 public class EPrice implements Comparable<EPrice> {
 
+    protected static final String NONE = "";
     protected static final String ZERO = "zero";
     protected static final String STANDBY = "standby";
     protected static final String TO_FULL = "to_full";
@@ -27,7 +28,7 @@ public class EPrice implements Comparable<EPrice> {
 
     private Double prijs = 0.0;
 
-    private String mode = "";
+    private String mode = NONE;
 
     public Boolean isDuur = false;
     public Boolean isGoedkoop = false;
