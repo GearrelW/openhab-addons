@@ -13,7 +13,6 @@
 package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -34,17 +33,16 @@ public class Plan {
     private TreeSet<EPrice> prices = new TreeSet<EPrice>();
     private List<EPrice> highPrices = new ArrayList<EPrice>();
     private TreeSet<EPrice> lowPrices = new TreeSet<EPrice>();
+    private int numberOfChargingHours = 2;
     private Double minMaxTreshold = 0.4;
-    private LocalDateTime lastControlledDateTime = LocalDateTime.now().minusDays(1);
     public Map<LocalDate, Double> averagePrices = new Hashtable<>();
     public Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
 
     public Plan() {
     }
 
-    public Plan(TreeSet<EPrice> prices, Map<LocalDate, Double> averagePrices, Double minMaxTreshold) {
-        this.prices = prices;
-        this.averagePrices = averagePrices;
+    public Plan(int numberOfChargingHours, Double minMaxTreshold) {
+        this.numberOfChargingHours = numberOfChargingHours;
         this.minMaxTreshold = minMaxTreshold;
     }
 
@@ -60,24 +58,55 @@ public class Plan {
         return highPrices.isEmpty();
     }
 
-    public void plan() {
-        plan(false);
+    private void init(TreeSet<EPrice> prices) {
+        highPrices.clear();
+        averagePrices.clear();
+
+        prices.stream()
+                .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)))
+                .forEach((date, avg) -> {
+                    if (!averagePrices.containsKey(date)) {
+                        averagePrices.put(date, avg);
+                    }
+                });
+        
+        this.prices = prices.stream().filter(ep -> ep.getMode() == EPrice.NONE).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));     
     }
 
-    public void plan(boolean forceSolarMode) {
-        highPrices.clear();
+    public void plan(TreeSet<EPrice> prices) {
+        init(prices);
+        if (this.prices.isEmpty()) {
+            return;
+        }
+        logger.error("plan: planning");
         setSolarMode();
+
         var hp = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1)
                 .filter(high -> prices.stream()
                         .anyMatch(low -> low.getDatumTijd().isBefore(high.getDatumTijd())
                                 && high.getPrijs() >= low.getPrijs() * (1 + minMaxTreshold)))
                 .collect(Collectors.toList());
 
-        var morning = hp.stream().filter(h -> h.getUur() <= 12).limit(4).collect(Collectors.toList());
-        var afternoon = hp.stream().filter(h -> h.getUur() > 12).limit(8).collect(Collectors.toList());
+        EPrice morningLimit = prices.stream().filter(h -> h.getUur() == 12).findFirst().orElse(null);
+        EPrice afternoonStart = prices.stream().filter(h -> h.getUur() == 9).findFirst().orElse(prices.first());
+
+        List<EPrice> morning = new ArrayList<EPrice>();
+        List<EPrice> afternoon = new ArrayList<EPrice>();
+
+        if (morningLimit != null) {
+            morning = hp.stream().filter(h -> h.getDatumTijd().isBefore(morningLimit.getDatumTijd()))
+                    .limit(numberOfChargingHours).collect(Collectors.toList());
+        }
+
+        afternoon = hp.stream().filter(h -> h.getDatumTijd().isAfter(afternoonStart.getDatumTijd()))
+                    .limit(numberOfChargingHours * 2).collect(Collectors.toList());
 
         morning.forEach(h -> highPrices.add(h));
         afternoon.forEach(h -> highPrices.add(h));
+
+        if (highPrices.isEmpty()) {
+            return;
+        }
 
         for (EPrice high : morning) {
             prices.stream()
@@ -87,25 +116,24 @@ public class Plan {
         }
         var morningLowNumber = Math.ceilDiv(morning.size(), 2);
         lowPrices = lowPrices.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
-                .limit(morningLowNumber).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));
+                .limit(morningLowNumber).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));       
 
         TreeSet<EPrice> afternoonLows = new TreeSet<EPrice>();
         for (EPrice high : afternoon) {
             prices.stream()
-                    .filter(lowPrice -> lowPrice.getDatumTijd().isBefore(high.getDatumTijd()) && lowPrice.getUur() > 12
+                    .filter(lowPrice -> lowPrice.getDatumTijd().isBefore(high.getDatumTijd()) && lowPrice.getDatumTijd().isAfter(afternoonStart.getDatumTijd())
                             && high.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
                     .forEach(low -> afternoonLows.add(low));
         }
+        
         var afternoonLowNumber = Math.ceilDiv(afternoon.size(), 2);
         afternoonLows.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).limit(afternoonLowNumber)
-                .forEach(low -> lowPrices.add(low));
+                .forEach(low -> lowPrices.add(low));     
 
         highPrices = highPrices.stream().sorted((ep1, ep2) -> ep1.getUur() > ep2.getUur() ? 1 : -1)
                 .collect(Collectors.toList());
 
-        if (!forceSolarMode && !highPrices.isEmpty()) {
-            setPricesModes();
-        }
+        setPricesModes();
     }
 
     private void setPricesModes() {
@@ -115,6 +143,9 @@ public class Plan {
                 .orElse(null);
 
         prices.stream().forEach(ep -> {
+            if (ep.getDatumTijd().isBefore(firstCharge.getDatumTijd()) && lowPrices.size() == numberOfChargingHours) {
+                ep.setMode(EPrice.ZERO_DISCHARGE_ONLY);
+            }
             if (ep.getDatumTijd().isAfter(firstCharge.getDatumTijd())
                     && ep.getDatumTijd().isBefore(lastDischarge.getDatumTijd())) {
                 ep.setMode(EPrice.STANDBY);
@@ -152,12 +183,6 @@ public class Plan {
                 }
             }
         });
-        try {
-            lastControlledDateTime = prices.stream().filter(ep -> !ep.getMode().equals(EPrice.ZERO))
-                    .collect(Collectors.toList()).getLast().getDatumTijd();
-        } catch (Exception e) {
-            // lastControlledDateTime = LocalDateTime.now().plusDays(1).withHour(0);
-        }
 
         logger.info("setSolarMode: " + prices.toString());
     }

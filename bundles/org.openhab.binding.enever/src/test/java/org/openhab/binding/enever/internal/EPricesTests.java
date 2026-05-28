@@ -18,7 +18,7 @@ public class EPricesTests {
     protected final Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
 
-    private String testDataE1 = "{\"status\":\"true\",\"data\":[{\"datum\":\"2036-04-11T00:00:00+02:00\",\"prijsZP\":\"0.142472\"},{\"datum\":\"2036-04-11T01:00:00+02:00\",\"prijsZP\":\"0.135617\"},{\"datum\":\"2036-04-11T02:00:00+02:00\",\"prijsZP\":\"0.136349\"},{\"datum\":\"2036-04-11T03:00:00+02:00\",\"prijsZP\":\"0.134652\"},{\"datum\":\"2036-04-11T04:00:00+02:00\",\"prijsZP\":\"0.135194\"},{\"datum\":\"2036-04-11T05:00:00+02:00\",\"prijsZP\":\"0.151347\"},{\"datum\":\"2036-04-11T06:00:00+02:00\",\"prijsZP\":\"0.207712\"},{\"datum\":\"2036-04-11T07:00:00+02:00\",\"prijsZP\":\"0.243371\"},{\"datum\":\"2036-04-11T08:00:00+02:00\",\"prijsZP\":\"0.266370\"},{\"datum\":\"2036-04-11T09:00:00+02:00\",\"prijsZP\":\"0.250459\"},{\"datum\":\"2036-04-11T10:00:00+02:00\",\"prijsZP\":\"0.221700\"},{\"datum\":\"2036-04-11T11:00:00+02:00\",\"prijsZP\":\"0.186507\"},{\"datum\":\"2036-04-11T12:00:00+02:00\",\"prijsZP\":\"0.160350\"},{\"datum\":\"2036-04-11T13:00:00+02:00\",\"prijsZP\":\"0.143721\"},{\"datum\":\"2036-04-11T14:00:00+02:00\",\"prijsZP\":\"0.139989\"},{\"datum\":\"2036-04-11T15:00:00+02:00\",\"prijsZP\":\"0.146504\"},{\"datum\":\"2036-04-11T16:00:00+02:00\",\"prijsZP\":\"0.171612\"},{\"datum\":\"2036-04-11T17:00:00+02:00\",\"prijsZP\":\"0.215381\"},{\"datum\":\"2036-04-11T18:00:00+02:00\",\"prijsZP\":\"0.251850\"},{\"datum\":\"2036-04-11T19:00:00+02:00\",\"prijsZP\":\"0.282185\"},{\"datum\":\"2036-04-11T20:00:00+02:00\",\"prijsZP\":\"0.287566\"},{\"datum\":\"2036-04-11T21:00:00+02:00\",\"prijsZP\":\"0.288029\"},{\"datum\":\"2036-04-11T22:00:00+02:00\",\"prijsZP\":\"0.295138\"},{\"datum\":\"2036-04-11T23:00:00+02:00\",\"prijsZP\":\"0.270911\"}],\"code\":\"5\"}";
+    private String testDataE1 = "{\"status\":\"true\",\"data\":[{\"datum\":\"2026-05-28T00:00:00+02:00\",\"prijsZP\":\"0.288434\"},{\"datum\":\"2026-05-28T01:00:00+02:00\",\"prijsZP\":\"0.284408\"},{\"datum\":\"2026-05-28T02:00:00+02:00\",\"prijsZP\":\"0.280376\"},{\"datum\":\"2026-05-28T03:00:00+02:00\",\"prijsZP\":\"0.279042\"},{\"datum\":\"2026-05-28T04:00:00+02:00\",\"prijsZP\":\"0.284069\"},{\"datum\":\"2026-05-28T05:00:00+02:00\",\"prijsZP\":\"0.291744\"},{\"datum\":\"2026-05-28T06:00:00+02:00\",\"prijsZP\":\"0.307295\"},{\"datum\":\"2026-05-28T07:00:00+02:00\",\"prijsZP\":\"0.296215\"},{\"datum\":\"2026-05-28T08:00:00+02:00\",\"prijsZP\":\"0.278410\"},{\"datum\":\"2026-05-28T09:00:00+02:00\",\"prijsZP\":\"0.235025\"},{\"datum\":\"2026-05-28T10:00:00+02:00\",\"prijsZP\":\"0.154620\"},{\"datum\":\"2026-05-28T11:00:00+02:00\",\"prijsZP\":\"0.131537\"},{\"datum\":\"2026-05-28T12:00:00+02:00\",\"prijsZP\":\"0.130838\"},{\"datum\":\"2026-05-28T13:00:00+02:00\",\"prijsZP\":\"0.130814\"},{\"datum\":\"2026-05-28T14:00:00+02:00\",\"prijsZP\":\"0.130838\"},{\"datum\":\"2026-05-28T15:00:00+02:00\",\"prijsZP\":\"0.132420\"},{\"datum\":\"2026-05-28T16:00:00+02:00\",\"prijsZP\":\"0.176146\"},{\"datum\":\"2026-05-28T17:00:00+02:00\",\"prijsZP\":\"0.247143\"},{\"datum\":\"2026-05-28T18:00:00+02:00\",\"prijsZP\":\"0.295540\"},{\"datum\":\"2026-05-28T19:00:00+02:00\",\"prijsZP\":\"0.389000\"},{\"datum\":\"2026-05-28T20:00:00+02:00\",\"prijsZP\":\"0.584969\"},{\"datum\":\"2026-05-28T21:00:00+02:00\",\"prijsZP\":\"0.562629\"},{\"datum\":\"2026-05-28T22:00:00+02:00\",\"prijsZP\":\"0.390613\"},{\"datum\":\"2026-05-28T23:00:00+02:00\",\"prijsZP\":\"0.321555\"}],\"code\":\"5\"}";
     private String testDataE2 = "{\"status\":\"true\",\"data\":[{\"datum\":\"2026-05-26T00:00:00+02:00\",\"prijsZP\":\"0.142472\"},{\"datum\":\"2026-05-26T01:00:00+02:00\",\"prijsZP\":\"0.135617\"},{\"datum\":\"2026-05-26T02:00:00+02:00\",\"prijsZP\":\"0.136349\"},{\"datum\":\"2026-05-26T03:00:00+02:00\",\"prijsZP\":\"0.134652\"},{\"datum\":\"2026-05-26T04:00:00+02:00\",\"prijsZP\":\"0.135194\"},{\"datum\":\"2026-05-26T05:00:00+02:00\",\"prijsZP\":\"0.151347\"},{\"datum\":\"2026-05-26T06:00:00+02:00\",\"prijsZP\":\"0.207712\"},{\"datum\":\"2026-05-26T07:00:00+02:00\",\"prijsZP\":\"0.243371\"},{\"datum\":\"2026-05-26T08:00:00+02:00\",\"prijsZP\":\"0.266370\"},{\"datum\":\"2026-05-26T09:00:00+02:00\",\"prijsZP\":\"0.250459\"},{\"datum\":\"2026-05-26T10:00:00+02:00\",\"prijsZP\":\"0.221700\"},{\"datum\":\"2026-05-26T11:00:00+02:00\",\"prijsZP\":\"0.186507\"},{\"datum\":\"2026-05-26T12:00:00+02:00\",\"prijsZP\":\"0.160350\"},{\"datum\":\"2026-05-26T13:00:00+02:00\",\"prijsZP\":\"0.143721\"},{\"datum\":\"2026-05-26T14:00:00+02:00\",\"prijsZP\":\"0.139989\"},{\"datum\":\"2026-05-26T15:00:00+02:00\",\"prijsZP\":\"0.146504\"},{\"datum\":\"2026-05-26T16:00:00+02:00\",\"prijsZP\":\"0.171612\"},{\"datum\":\"2026-05-26T17:00:00+02:00\",\"prijsZP\":\"0.215381\"},{\"datum\":\"2026-05-26T18:00:00+02:00\",\"prijsZP\":\"0.251850\"},{\"datum\":\"2026-05-26T19:00:00+02:00\",\"prijsZP\":\"0.282185\"},{\"datum\":\"2026-05-26T20:00:00+02:00\",\"prijsZP\":\"0.287566\"},{\"datum\":\"2026-05-26T21:00:00+02:00\",\"prijsZP\":\"0.288029\"},{\"datum\":\"2026-05-26T22:00:00+02:00\",\"prijsZP\":\"0.295138\"},{\"datum\":\"2026-05-26T23:00:00+02:00\",\"prijsZP\":\"0.270911\"}],\"code\":\"5\"}";
 
     // private String testDataE2 =
@@ -35,13 +35,14 @@ public class EPricesTests {
         // var prices2 = pr2.getElectricityPrices().stream()
         // .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
         prices.addPrices(prices1);
+        prices.plan.plan(prices.getAllPrices());
         // prices.addPrices(prices2);
         // prices.processPrices();
 
-        prices.getPriceFor(LocalDateTime.now());
+        var p = prices.getPriceFor(LocalDateTime.now());
 
         logger.info("Strategy: " + prices.controlStrategy);
-        // logger.info("Prices: " + prices.getAllPrices().toString());
+        logger.info("NU: " + p.toString());
     }
 
     @Test
@@ -57,8 +58,8 @@ public class EPricesTests {
         prices.addPrices(prices1);
         // prices.addPrices(prices2);
         // prices.processPrices();
-        logger.info("plus 2: " + prices.getPriceFor(LocalDateTime.now().plusHours(2)).toString());
-        logger.info("now: " + prices.getPriceFor(LocalDateTime.now()).toString());
+        // logger.info("plus 2: " + prices.getPriceFor(LocalDateTime.now().plusHours(2)).toString());
+        // logger.info("now: " + prices.getPriceFor(LocalDateTime.now()).toString());
 
         logger.info("Strategy: " + prices.controlStrategy);
         // logger.info("Prices: " + prices.getAllPrices().toString());
@@ -77,8 +78,8 @@ public class EPricesTests {
         prices.addPrices(prices1);
         // prices.addPrices(prices2);
 
-        logger.info("mode: " + prices.controlStrategy);
-        logger.info("Prices: " + prices.getAllPrices().toString());
+        // logger.info("mode: " + prices.controlStrategy);
+        // logger.info("Prices: " + prices.getAllPrices().toString());
     }
 
     // @Test

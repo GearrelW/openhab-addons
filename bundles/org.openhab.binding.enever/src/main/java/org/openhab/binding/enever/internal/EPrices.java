@@ -30,25 +30,24 @@ public class EPrices {
     private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
 
     private TreeSet<EPrice> allPrices = new TreeSet<EPrice>();
-    private Plan plan = new Plan();
+    public Plan plan = new Plan();
     public String controlStrategy = SOLAR_CONTROL;
     private Double treshold = 0.15;
-    private Double minMaxTreshold = 0.4;
-    private int numberOfHours = 2;
+
     private LocalDateTime lastControlledDateTime = LocalDateTime.now().minusDays(1);
     public Map<LocalDate, Double> averagePrices = new Hashtable<>();
     public Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
 
     public EPrices(Double minMaxTreshold, Double priceTreshold, int numberOfHours) {
-        this.minMaxTreshold = minMaxTreshold;
         this.treshold = priceTreshold;
-        this.numberOfHours = numberOfHours;
+        this.plan = new Plan(numberOfHours, minMaxTreshold);
     }
 
     public void addPrices(Map<LocalDateTime, Double> prices) {
         prices.entrySet().forEach(entry -> {
             allPrices.add(new EPrice(entry.getKey(), entry.getValue()));
         });
+        allPrices.removeIf(ep -> ep.getDatum().isBefore(LocalDate.now()));
         allPrices.stream().sorted();
 
         averagePrices.keySet().removeIf(date -> date.isBefore(LocalDate.now()));
@@ -64,6 +63,7 @@ public class EPrices {
                 Collectors.maxBy((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())))).forEach((date, max) -> {
                     maxPrices.put(date, max.get());
                 });
+        plan.plan(allPrices);
     }
 
     public TreeSet<EPrice> getAllPrices() {
@@ -74,18 +74,12 @@ public class EPrices {
         return allPrices.stream().anyMatch(ep -> ep.getDatum().equals(date));
     }
 
-    private void makePlan() {
-        allPrices.removeIf(eprice -> eprice.getDatumTijd().isBefore(LocalDateTime.now().minusHours(1)));
-        plan = new Plan(allPrices, averagePrices, minMaxTreshold);
-        plan.plan();
-    }
-
     public EPrice getPriceFor(LocalDateTime datetime) {
         var price = allPrices.stream()
                 .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
                 .findFirst().orElse(null);
         if (price != null && price.getMode() == EPrice.NONE) {
-            makePlan();
+            plan.plan(allPrices);
             price = allPrices.stream()
                     .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
                     .findFirst().orElse(null);
