@@ -14,10 +14,8 @@ package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +28,8 @@ public class EPrices {
     private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
 
     private TreeSet<EPrice> allPrices = new TreeSet<EPrice>();
-    public Plan plan = new Plan();
-    public String controlStrategy = SOLAR_CONTROL;
+    private Plan plan = new Plan();
     private Double treshold = 0.15;
-
-    private LocalDateTime lastControlledDateTime = LocalDateTime.now().minusDays(1);
-    public Map<LocalDate, Double> averagePrices = new Hashtable<>();
-    public Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
 
     public EPrices(Double minMaxTreshold, Double priceTreshold, int numberOfHours) {
         this.treshold = priceTreshold;
@@ -47,22 +40,9 @@ public class EPrices {
         prices.entrySet().forEach(entry -> {
             allPrices.add(new EPrice(entry.getKey(), entry.getValue()));
         });
-        allPrices.removeIf(ep -> ep.getDatum().isBefore(LocalDate.now()));
+        allPrices.removeIf(ep -> ep.getDatumTijd().isBefore(LocalDateTime.now().minusHours(1)));
         allPrices.stream().sorted();
 
-        averagePrices.keySet().removeIf(date -> date.isBefore(LocalDate.now()));
-
-        allPrices.stream()
-                .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)))
-                .forEach((date, avg) -> {
-                    if (!averagePrices.containsKey(date)) {
-                        averagePrices.put(date, avg);
-                    }
-                });
-        allPrices.stream().collect(Collectors.groupingBy(EPrice::getDatum,
-                Collectors.maxBy((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())))).forEach((date, max) -> {
-                    maxPrices.put(date, max.get());
-                });
         plan.plan(allPrices);
     }
 
@@ -70,8 +50,24 @@ public class EPrices {
         return allPrices;
     }
 
+    public Plan getPlan() {
+        return plan;
+    }
+
+    public String getControlStrategy() {
+        return plan.isSolarModeEnabled() ? SOLAR_CONTROL : PRICES_CONTROL;
+    }
+
     public boolean containsDate(LocalDate date) {
         return allPrices.stream().anyMatch(ep -> ep.getDatum().equals(date));
+    }
+
+    public EPrice getMaxPriceFor(LocalDate date) {
+        return plan.getMaxPrices().get(date);
+    }
+
+    public Double getAveragePriceFor(LocalDate date) {
+        return plan.getAveragePrices().get(date);
     }
 
     public EPrice getPriceFor(LocalDateTime datetime) {
@@ -83,6 +79,15 @@ public class EPrices {
             price = allPrices.stream()
                     .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
                     .findFirst().orElse(null);
+        }
+
+        var avgPrice = plan.getAveragePrices().get(datetime.toLocalDate());
+
+        if (price.getPrijs() <= (avgPrice * (1 - treshold))) {
+            price.isGoedkoop = true;
+        }
+        if (price.getPrijs() > (avgPrice * (1 + treshold))) {
+            price.isDuur = true;
         }
 
         return price;

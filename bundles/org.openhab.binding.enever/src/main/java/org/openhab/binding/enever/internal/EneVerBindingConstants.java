@@ -40,4 +40,8 @@ public class EneVerBindingConstants {
     public static final String CHANNEL_BATTERY_CONTROL_STRATEGY = "battery-control-strategy";
     public static final String CHANNEL_PRICE_WARNING = "warning-hour";
     public static final String CHANNEL_PEAK_HOUR = "peak-hour";
+    public static final String CHANNEL_CHARGE_START = "charge-start";
+    public static final String CHANNEL_CHARGE_END = "charge-end";
+    public static final String CHANNEL_DISCHARGE_START = "discharge-start";
+    public static final String CHANNEL_DISCHARGE_END = "discharge-end";
 }

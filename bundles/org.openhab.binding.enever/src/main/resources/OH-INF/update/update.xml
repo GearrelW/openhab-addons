@@ -12,6 +12,25 @@
 
 		</instruction-set>
 
+		<instruction-set targetVersion="3">
+			<update-channel id="peak-hour">
+				<type>enever:channel-datetime</type>
+			</update-channel>
+			<add-channel id="charge-start">
+				<type>enever:channel-datetime</type>
+			</add-channel>
+			<add-channel id="charge-end">
+				<type>enever:channel-datetime</type>
+			</add-channel>
+			<add-channel id="discharge-start">
+				<type>enever:channel-datetime</type>
+			</add-channel>
+			<add-channel id="discharge-end">
+				<type>enever:channel-datetime</type>
+			</add-channel>
+
+		</instruction-set>
+
 	</thing-type>
 
 </update:update-descriptions>

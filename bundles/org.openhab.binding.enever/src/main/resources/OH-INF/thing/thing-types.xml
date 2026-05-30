@@ -41,13 +41,29 @@
 			</channel>
 			<channel id="battery-control-strategy" typeId="channel-strategy">
 			</channel>
-			<channel id="peak-hour" typeId="channel-peak">
+			<channel id="peak-hour" typeId="channel-datetime">
 				<label>Peak price Hour</label>
 				<description>Hour with the highest price for the day</description>
 			</channel>
+			<channel id="charge-start" typeId="channel-datetime">
+				<label>Start charging</label>
+				<description>Start charging</description>
+			</channel>
+			<channel id="charge-end" typeId="channel-datetime">
+				<label>Stop charging</label>
+				<description>Stop charging</description>
+			</channel>
+			<channel id="discharge-start" typeId="channel-datetime">
+				<label>Start discharging</label>
+				<description>Start discharging</description>
+			</channel>
+			<channel id="discharge-end" typeId="channel-datetime">
+				<label>Stop discharging</label>
+				<description>Stop discharging</description>
+			</channel>
 		</channels>
 		<properties>
-			<property name="thingTypeVersion">1</property>
+			<property name="thingTypeVersion">3</property>
 		</properties>
 
 		<config-description>
@@ -106,6 +122,12 @@
 		<item-type>Number</item-type>
 		<label>Peak hour</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
 		<description>Peak Hour</description>
+		<state readOnly="true"></state>
+	</channel-type>
+	<channel-type id="channel-datetime">
+		<item-type>DateTime</item-type>
+		<label>DateTime</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Date and Time</description>
 		<state readOnly="true"></state>
 	</channel-type>
 </thing:thing-descriptions>

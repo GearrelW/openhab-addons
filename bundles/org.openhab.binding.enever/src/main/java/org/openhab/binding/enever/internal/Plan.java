@@ -13,6 +13,7 @@
 package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -35,8 +36,18 @@ public class Plan {
     private TreeSet<EPrice> lowPrices = new TreeSet<EPrice>();
     private int numberOfChargingHours = 2;
     private Double minMaxTreshold = 0.4;
-    public Map<LocalDate, Double> averagePrices = new Hashtable<>();
-    public Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
+    private Map<LocalDate, Double> averagePrices = new Hashtable<>();
+    private Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
+
+    private LocalDateTime morningChargeStart;
+    private LocalDateTime afternoonChargeStart;
+    private LocalDateTime morningChargeEnd;
+    private LocalDateTime afternoonChargeEnd;
+
+    private LocalDateTime morningDischargeStart;
+    private LocalDateTime afternoonDischargeStart;
+    private LocalDateTime morningDischargeEnd;
+    private LocalDateTime afternoonDischargeEnd;
 
     public Plan() {
     }
@@ -54,28 +65,81 @@ public class Plan {
         return prices;
     }
 
+    public Map<LocalDate, EPrice> getMaxPrices() {
+        return maxPrices;
+    }
+
+    public LocalDateTime getChargeStart(LocalDateTime start) {
+        if (morningChargeStart != null && morningChargeStart.isAfter(start)) {
+            return morningChargeStart;
+        } else {
+            return afternoonChargeStart;
+        }
+    }
+
+    public LocalDateTime getChargeEnd(LocalDateTime start) {
+        if (morningChargeEnd != null && morningChargeEnd.isAfter(start)) {
+            return morningChargeEnd;
+        } else {
+            return afternoonChargeEnd;
+        }
+    }
+
+    public LocalDateTime getDischargeStart(LocalDateTime start) {
+        if (morningDischargeStart != null && morningDischargeStart.isAfter(start)) {
+            return morningDischargeStart;
+        } else {
+            return afternoonDischargeStart;
+        }
+    }
+
+    public LocalDateTime getDischargeEnd(LocalDateTime start) {
+        if (morningDischargeEnd != null && morningDischargeEnd.isAfter(start)) {
+            return morningDischargeEnd;
+        } else {
+            return afternoonDischargeEnd;
+        }
+    }
+
+    public Map<LocalDate, Double> getAveragePrices() {
+        return averagePrices;
+    }
+
     public boolean isSolarModeEnabled() {
         return highPrices.isEmpty();
     }
 
-    private void init(TreeSet<EPrice> prices) {
+    private void init(TreeSet<EPrice> pr) {
         highPrices.clear();
         averagePrices.clear();
+        prices = pr;
 
-        prices.stream()
-                .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)))
+        prices.stream().collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)))
                 .forEach((date, avg) -> {
                     if (!averagePrices.containsKey(date)) {
                         averagePrices.put(date, avg);
                     }
                 });
-        
-        this.prices = prices.stream().filter(ep -> ep.getMode() == EPrice.NONE).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));     
+
+        prices.stream().collect(Collectors.groupingBy(EPrice::getDatum,
+                Collectors.maxBy((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())))).forEach((date, max) -> {
+                    maxPrices.put(date, max.get());
+                });
     }
 
-    public void plan(TreeSet<EPrice> prices) {
-        init(prices);
-        if (this.prices.isEmpty()) {
+    public void plan(TreeSet<EPrice> pr) {
+        init(pr);
+        morningChargeStart = null;
+        morningChargeEnd = null;
+        morningDischargeStart = null;
+        morningDischargeEnd = null;
+
+        afternoonChargeStart = null;
+        afternoonChargeEnd = null;
+        afternoonDischargeStart = null;
+        afternoonDischargeEnd = null;
+
+        if (prices.isEmpty()) {
             return;
         }
         logger.error("plan: planning");
@@ -99,7 +163,7 @@ public class Plan {
         }
 
         afternoon = hp.stream().filter(h -> h.getDatumTijd().isAfter(afternoonStart.getDatumTijd()))
-                    .limit(numberOfChargingHours * 2).collect(Collectors.toList());
+                .limit(numberOfChargingHours * 2).collect(Collectors.toList());
 
         morning.forEach(h -> highPrices.add(h));
         afternoon.forEach(h -> highPrices.add(h));
@@ -108,27 +172,9 @@ public class Plan {
             return;
         }
 
-        for (EPrice high : morning) {
-            prices.stream()
-                    .filter(lowPrice -> lowPrice.getDatumTijd().isBefore(high.getDatumTijd())
-                            && high.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
-                    .forEach(low -> lowPrices.add(low));
-        }
-        var morningLowNumber = Math.ceilDiv(morning.size(), 2);
-        lowPrices = lowPrices.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
-                .limit(morningLowNumber).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));       
+        processMorningHighs(morning);
 
-        TreeSet<EPrice> afternoonLows = new TreeSet<EPrice>();
-        for (EPrice high : afternoon) {
-            prices.stream()
-                    .filter(lowPrice -> lowPrice.getDatumTijd().isBefore(high.getDatumTijd()) && lowPrice.getDatumTijd().isAfter(afternoonStart.getDatumTijd())
-                            && high.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
-                    .forEach(low -> afternoonLows.add(low));
-        }
-        
-        var afternoonLowNumber = Math.ceilDiv(afternoon.size(), 2);
-        afternoonLows.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1).limit(afternoonLowNumber)
-                .forEach(low -> lowPrices.add(low));     
+        processAfternoonHighs(afternoonStart, afternoon);
 
         highPrices = highPrices.stream().sorted((ep1, ep2) -> ep1.getUur() > ep2.getUur() ? 1 : -1)
                 .collect(Collectors.toList());
@@ -136,21 +182,72 @@ public class Plan {
         setPricesModes();
     }
 
-    private void setPricesModes() {
-        var firstCharge = lowPrices.stream().min((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1)
-                .orElse(null);
-        var lastDischarge = highPrices.stream().max((h1, h2) -> h1.getDatumTijd().isBefore(h2.getDatumTijd()) ? -1 : 1)
-                .orElse(null);
+    private void processMorningHighs(List<EPrice> morning) {
+        if (!morning.isEmpty()) {
+            for (EPrice high : morning) {
+                prices.stream()
+                        .filter(lowPrice -> lowPrice.getDatumTijd().isBefore(high.getDatumTijd())
+                                && high.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
+                        .forEach(low -> lowPrices.add(low));
+            }
+            var morningLowNumber = Math.ceilDiv(morning.size(), 2);
+            lowPrices = lowPrices.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
+                    .limit(morningLowNumber).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));
 
-        prices.stream().forEach(ep -> {
-            if (ep.getDatumTijd().isBefore(firstCharge.getDatumTijd()) && lowPrices.size() == numberOfChargingHours) {
-                ep.setMode(EPrice.ZERO_DISCHARGE_ONLY);
-            }
-            if (ep.getDatumTijd().isAfter(firstCharge.getDatumTijd())
-                    && ep.getDatumTijd().isBefore(lastDischarge.getDatumTijd())) {
-                ep.setMode(EPrice.STANDBY);
-            }
-        });
+            morningChargeStart = lowPrices.stream()
+                    .min((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1).orElse(lowPrices.last())
+                    .getDatumTijd();
+            morningChargeEnd = lowPrices.stream()
+                    .max((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1).orElse(lowPrices.last())
+                    .getDatumTijd().plusHours(1);
+            morningDischargeStart = morning.stream()
+                    .min((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1).orElse(lowPrices.last())
+                    .getDatumTijd();
+            morningDischargeEnd = morning.stream()
+                    .max((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1).orElse(lowPrices.last())
+                    .getDatumTijd().plusHours(1);
+        }
+    }
+
+    private void processAfternoonHighs(EPrice afternoonStart, List<EPrice> afternoon) {
+        TreeSet<EPrice> afternoonLows = new TreeSet<EPrice>();
+        for (EPrice high : afternoon) {
+            prices.stream()
+                    .filter(lowPrice -> lowPrice.getDatumTijd().isBefore(high.getDatumTijd())
+                            && lowPrice.getDatumTijd().isAfter(afternoonStart.getDatumTijd())
+                            && high.getPrijs() >= lowPrice.getPrijs() * (1 + minMaxTreshold))
+                    .forEach(low -> afternoonLows.add(low));
+        }
+
+        var afternoonLowNumber = Math.ceilDiv(afternoon.size(), 2);
+        var al = afternoonLows.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
+                .limit(afternoonLowNumber).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));
+        al.forEach(low -> lowPrices.add(low));
+
+        afternoonChargeStart = al.stream().min((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1)
+                .orElse(al.last()).getDatumTijd();
+        afternoonChargeEnd = al.stream().max((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1)
+                .orElse(al.last()).getDatumTijd().plusHours(1);
+        afternoonDischargeStart = afternoon.stream()
+                .min((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1).orElse(afternoonLows.last())
+                .getDatumTijd();
+        afternoonDischargeEnd = afternoon.stream()
+                .max((l1, l2) -> l1.getDatumTijd().isBefore(l2.getDatumTijd()) ? -1 : 1).orElse(afternoonLows.last())
+                .getDatumTijd().plusHours(1);
+    }
+
+    private void setPricesModes() {
+        if (afternoonChargeStart != null && afternoonDischargeEnd != null) {
+            prices.stream().forEach(ep -> {
+                if (ep.getDatumTijd().isBefore(afternoonChargeStart)) {
+                    ep.setMode(EPrice.ZERO_DISCHARGE_ONLY);
+                }
+                if (ep.getDatumTijd().isAfter(afternoonChargeStart)
+                        && ep.getDatumTijd().isBefore(afternoonDischargeEnd)) {
+                    ep.setMode(EPrice.STANDBY);
+                }
+            });
+        }
 
         lowPrices.stream().forEach(ep -> {
             ep.setMode(EPrice.TO_FULL);

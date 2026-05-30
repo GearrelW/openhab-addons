@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import org.openhab.binding.enever.internal.payloads.EneVerPayload;
 import org.openhab.binding.enever.internal.payloads.IPayload;
 import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
 import org.openhab.core.io.net.http.HttpUtil;
+import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelUID;
@@ -115,9 +117,6 @@ public class EneVerHandler extends BaseThingHandler {
                 updateStatus(ThingStatus.OFFLINE);
             }
             var now = LocalDateTime.now();
-            if (now.getHour() >= 20) {
-                retrieveElectricityPrices();
-            }
 
             // update channels
             updateGasChannels();
@@ -128,12 +127,6 @@ public class EneVerHandler extends BaseThingHandler {
             long nextHourlyScheduleInNanos = Duration
                     .between(now, now.plusHours(1).withMinute(0).withSecond(0).withNano(0)).toNanos();
             hourlyJob = scheduler.scheduleWithFixedDelay(this::updateHourlyChannels, nextHourlyScheduleInNanos,
-                    TimeUnit.HOURS.toNanos(1), TimeUnit.NANOSECONDS);
-
-            // schedule get electricity prices next day
-            long nextDayScheduleInNanos = Duration
-                    .between(now, now.plusHours(1).withMinute(15).withSecond(0).withNano(0)).toNanos();
-            nextDayJob = scheduler.scheduleWithFixedDelay(this::retrieveElectricityPrices, nextDayScheduleInNanos,
                     TimeUnit.HOURS.toNanos(1), TimeUnit.NANOSECONDS);
 
             // schedule update channels daily
@@ -179,12 +172,9 @@ public class EneVerHandler extends BaseThingHandler {
     private boolean retrieveElectricityPrices() {
         var date = LocalDate.now();
 
-        if (ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date)) {
+        if (ePrices.containsDate(date)) {
             date = date.plusDays(1);
-            if ((ePrices.containsDate(date) && ePrices.averagePrices.containsKey(date))
-                    || LocalDateTime.now().getHour() < 14) {
-
-                // ePrices.processPrices();
+            if ((ePrices.containsDate(date)) || LocalDateTime.now().getHour() < 14) {
                 return true;
             }
         }
@@ -211,10 +201,9 @@ public class EneVerHandler extends BaseThingHandler {
             var prices = payload.getElectricityPrices().stream()
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
-            // ePrices.processPrices();
 
             updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY,
-                    new StringType(ePrices.controlStrategy));
+                    new StringType(ePrices.getControlStrategy()));
 
             logger.info("Retrieved for " + date);
         }
@@ -290,18 +279,20 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     private void updateDailyChannels() {
-        var now = LocalDate.now();
+        var today = LocalDate.now();
 
-        var maxPrice = ePrices.maxPrices.get(now);
+        var maxPrice = ePrices.getMaxPriceFor(today);
         if (maxPrice != null) {
-            updateState(EneVerBindingConstants.CHANNEL_PEAK_HOUR, new DecimalType(maxPrice.getUur()));
+            var ph = maxPrice.getDatumTijd().atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
+            updateState(EneVerBindingConstants.CHANNEL_PEAK_HOUR, new DateTimeType(ph));
         }
 
-        var average = ePrices.averagePrices.get(now);
+        var average = ePrices.getAveragePriceFor(today);
         if (average != null) {
             updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE, new DecimalType(average));
         }
-        updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY, new StringType(ePrices.controlStrategy));
+        updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY,
+                new StringType(ePrices.getControlStrategy()));
     }
 
     private void updateHourlyChannels() {
@@ -335,6 +326,30 @@ public class EneVerHandler extends BaseThingHandler {
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2,
                     new DecimalType(prijs.getPrijs()));
+        }
+
+        var chargeStart = ePrices.getPlan().getChargeStart(now);
+        if (chargeStart != null) {
+            var cs = chargeStart.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
+            updateState(EneVerBindingConstants.CHANNEL_CHARGE_START, new DateTimeType(cs));
+        }
+
+        var chargeEnd = ePrices.getPlan().getChargeEnd(now);
+        if (chargeEnd != null) {
+            var ce = chargeEnd.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
+            updateState(EneVerBindingConstants.CHANNEL_CHARGE_END, new DateTimeType(ce));
+        }
+
+        var dischargeStart = ePrices.getPlan().getDischargeStart(now);
+        if (dischargeStart != null) {
+            var ds = dischargeStart.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
+            updateState(EneVerBindingConstants.CHANNEL_DISCHARGE_START, new DateTimeType(ds));
+        }
+
+        var dischargeEnd = ePrices.getPlan().getDischargeEnd(now);
+        if (dischargeEnd != null) {
+            var de = dischargeEnd.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
+            updateState(EneVerBindingConstants.CHANNEL_DISCHARGE_END, new DateTimeType(de));
         }
     }
 
