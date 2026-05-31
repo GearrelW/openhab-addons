@@ -298,11 +298,7 @@ public class EneVerHandler extends BaseThingHandler {
     private void updateHourlyChannels() {
         var now = LocalDateTime.now();
         logger.debug("updating channels for " + now);
-        var prijs = ePrices.getPriceFor(now);
-        if (prijs == null) {
-            retrieveElectricityPrices();
-            prijs = ePrices.getPriceFor(now);
-        }
+        var prijs = getPrijs(now);
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(prijs.getPrijs()));
 
@@ -316,13 +312,13 @@ public class EneVerHandler extends BaseThingHandler {
 
             updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getMode()));
         }
-        prijs = ePrices.getPriceFor(now.plusHours(1));
+        prijs = getPrijs(now.plusHours(1));
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1,
                     new DecimalType(prijs.getPrijs()));
         }
 
-        prijs = ePrices.getPriceFor(now.plusHours(2));
+        prijs = getPrijs(now.plusHours(2));
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2,
                     new DecimalType(prijs.getPrijs()));
@@ -351,6 +347,15 @@ public class EneVerHandler extends BaseThingHandler {
             var de = dischargeEnd.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
             updateState(EneVerBindingConstants.CHANNEL_DISCHARGE_END, new DateTimeType(de));
         }
+    }
+
+    private EPrice getPrijs(LocalDateTime now) {
+        var prijs = ePrices.getPriceFor(now);
+        if (prijs == null) {
+            retrieveElectricityPrices();
+            prijs = ePrices.getPriceFor(now);
+        }
+        return prijs;
     }
 
     @Override
