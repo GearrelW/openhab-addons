@@ -74,20 +74,22 @@ public class EPrices {
         var price = allPrices.stream()
                 .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
                 .findFirst().orElse(null);
-        if (price != null && price.getMode() == EPrice.NONE) {
-            plan.plan(allPrices);
-            price = allPrices.stream()
-                    .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
-                    .findFirst().orElse(null);
-        }
+        if (price != null) {
+            if (price.getMode() == EPrice.NONE) {
+                plan.plan(allPrices);
+                price = allPrices.stream()
+                        .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
+                        .findFirst().orElse(null);
+            }
 
-        var avgPrice = plan.getAveragePrices().get(datetime.toLocalDate());
+            var avgPrice = plan.getAveragePrices().get(datetime.toLocalDate());
 
-        if (price.getPrijs() <= (avgPrice * (1 - treshold))) {
-            price.isGoedkoop = true;
-        }
-        if (price.getPrijs() > (avgPrice * (1 + treshold))) {
-            price.isDuur = true;
+            if (price.getPrijs() <= (avgPrice * (1 - treshold))) {
+                price.isGoedkoop = true;
+            }
+            if (price.getPrijs() > (avgPrice * (1 + treshold))) {
+                price.isDuur = true;
+            }
         }
 
         return price;

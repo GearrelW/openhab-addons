@@ -53,7 +53,9 @@ public class EPricesTests {
         logger.info("Laden stopt -5: " + prices.getPlan().getChargeEnd(now.minusHours(5)));
         logger.info("Ontladen start -5: " + prices.getPlan().getDischargeStart(now.minusHours(5)));
         logger.info("Ontladen stopt -5: " + prices.getPlan().getDischargeEnd(now.minusHours(5)));
-        logger.info("NU: " + p.toString());
+        if (p != null) {
+            logger.info("NU: " + p.toString());
+        }
     }
 
     // @Test
