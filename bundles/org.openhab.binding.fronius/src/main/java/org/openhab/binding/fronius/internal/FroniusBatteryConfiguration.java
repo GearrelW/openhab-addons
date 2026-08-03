@@ -10,17 +10,16 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.benqprojector.internal.enums;
+package org.openhab.binding.fronius.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * Valid values for BenQ switch commands.
+ * The {@link FroniusBatteryConfiguration} is the class used to match the battery thing configuration.
  *
- * @author Michael Lobstein - Initial contribution
+ * @author Christian Jonak-Möchel - Initial contribution
  */
 @NonNullByDefault
-public enum Switch {
-    ON,
-    OFF
+public class FroniusBatteryConfiguration extends FroniusBaseDeviceConfiguration {
+    public int batterySettingsRefreshInterval = 5;
 }

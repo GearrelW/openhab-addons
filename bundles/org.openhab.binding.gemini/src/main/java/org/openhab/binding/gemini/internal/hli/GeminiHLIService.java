@@ -16,6 +16,7 @@ import static org.openhab.binding.gemini.internal.GeminiBindingConstants.BINDING
 import static org.openhab.binding.gemini.internal.GeminiBindingConstants.DEFAULT_MODEL;
 import static org.openhab.binding.gemini.internal.GeminiBindingConstants.DEFAULT_SYSTEM_MESSAGE;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -28,6 +29,7 @@ import org.openhab.binding.gemini.internal.GeminiConfiguration;
 import org.openhab.binding.gemini.internal.GeminiHandler;
 import org.openhab.binding.gemini.internal.api.GeminiApiClient;
 import org.openhab.binding.gemini.internal.api.GeminiApiException;
+import org.openhab.binding.gemini.internal.api.GeminiLLMToolCall;
 import org.openhab.binding.gemini.internal.api.dto.GeminiContent;
 import org.openhab.binding.gemini.internal.api.dto.GeminiFunctionCall;
 import org.openhab.binding.gemini.internal.api.dto.GeminiPart;
@@ -43,7 +45,6 @@ import org.openhab.core.voice.text.conversation.Conversation;
 import org.openhab.core.voice.text.conversation.ConversationException;
 import org.openhab.core.voice.text.conversation.ConversationRole;
 import org.openhab.core.voice.text.interpreter.llm.LLMTool;
-import org.openhab.core.voice.text.interpreter.llm.LLMToolCall;
 import org.openhab.core.voice.text.interpreter.llm.LLMToolException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -186,7 +187,7 @@ public class GeminiHLIService implements ThingHandlerService, HumanLanguageInter
         }
 
         Conversation conversation = interpreterContext.conversation();
-        List<LLMTool> tools = interpreterContext.tools();
+        Collection<LLMTool> tools = interpreterContext.tools();
 
         String systemMessage = interpreterContext.systemPrompt();
         if (systemMessage == null || systemMessage.isBlank()) {
@@ -252,8 +253,8 @@ public class GeminiHLIService implements ThingHandlerService, HumanLanguageInter
                         String toolName = fc.name();
                         Map<String, Object> args = fc.args();
 
-                        LLMToolCall llmToolCall = new LLMToolCall(toolName != null ? toolName : "",
-                                args != null ? args : new HashMap<>());
+                        GeminiLLMToolCall llmToolCall = new GeminiLLMToolCall(toolName != null ? toolName : "",
+                                args != null ? args : new HashMap<>(), fc.id(), part.thoughtSignature());
                         try {
                             conversation.addMessage(ConversationRole.TOOL_CALL, llmToolCall.toJson());
                         } catch (ConversationException e) {
@@ -303,7 +304,7 @@ public class GeminiHLIService implements ThingHandlerService, HumanLanguageInter
         }
     }
 
-    private String executeTool(List<LLMTool> tools, @Nullable String toolName, @Nullable Map<String, Object> args,
+    private String executeTool(Collection<LLMTool> tools, @Nullable String toolName, @Nullable Map<String, Object> args,
             Locale locale) {
         if (toolName == null) {
             return "Error: Tool name is null";
