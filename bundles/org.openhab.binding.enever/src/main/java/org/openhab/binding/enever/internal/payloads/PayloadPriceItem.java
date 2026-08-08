@@ -36,7 +36,7 @@ public class PayloadPriceItem {
 
     public LocalDateTime getDatumTijd() {
         try {
-            return ZonedDateTime.parse(datum).withMinute(0).withSecond(0).withSecond(0).toLocalDateTime();
+            return ZonedDateTime.parse(datum).withSecond(0).withSecond(0).toLocalDateTime();
         } catch (DateTimeParseException ex) {
             return LocalDateTime.MIN.withMinute(0).withSecond(0).withSecond(0);
         }

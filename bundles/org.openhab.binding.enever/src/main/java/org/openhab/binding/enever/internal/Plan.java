@@ -142,7 +142,7 @@ public class Plan {
         if (prices.isEmpty()) {
             return;
         }
-        logger.error("plan: planning");
+        // logger.error("plan: planning");
         setSolarMode();
 
         var hp = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1)
@@ -258,6 +258,7 @@ public class Plan {
         });
 
         logger.error("setPricesModes: modes " + prices.toString());
+        logger.info("setPricesModes: modes " + prices.toString());
     }
 
     private void setSolarMode() {

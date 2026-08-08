@@ -47,11 +47,15 @@ public class EPrice implements Comparable<EPrice> {
     }
 
     public LocalDateTime getDatumTijd() {
-        return datum.withMinute(0).withSecond(0).withNano(0);
+        return datum.withSecond(0).withNano(0);
     }
 
     public int getUur() {
         return datum.getHour();
+    }
+
+    public int getMinuut() {
+        return datum.getMinute();
     }
 
     public String getMode() {

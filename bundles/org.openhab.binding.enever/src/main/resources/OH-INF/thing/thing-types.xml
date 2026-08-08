@@ -71,8 +71,8 @@
 				<label>Token</label>
 				<description>Token</description>
 			</parameter>
-			<parameter name="numberOfHours" type="integer" required="true">
-				<label>Number of hours</label>
+			<parameter name="numberOfChargingMoments" type="integer" required="true">
+				<label>Number of charging moments</label>
 				<description>Number of cheap/expensive hours</description>
 			</parameter>
 			<parameter name="priceTreshold" type="integer" required="false">

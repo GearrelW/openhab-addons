@@ -27,7 +27,7 @@ public class EneVerConfiguration {
      */
     public String token = "";
 
-    public int numberOfHours = 0;
+    public int numberOfChargingMoments = 0;
 
     public int priceTreshold = 0;
 

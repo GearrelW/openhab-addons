@@ -31,9 +31,9 @@ public class EPrices {
     private Plan plan = new Plan();
     private Double treshold = 0.15;
 
-    public EPrices(Double minMaxTreshold, Double priceTreshold, int numberOfHours) {
+    public EPrices(Double minMaxTreshold, Double priceTreshold, int numberOfChargingMoments) {
         this.treshold = priceTreshold;
-        this.plan = new Plan(numberOfHours, minMaxTreshold);
+        this.plan = new Plan(numberOfChargingMoments, minMaxTreshold);
     }
 
     public void addPrices(Map<LocalDateTime, Double> prices) {
@@ -71,14 +71,24 @@ public class EPrices {
     }
 
     public EPrice getPriceFor(LocalDateTime datetime) {
-        var price = allPrices.stream()
-                .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
-                .findFirst().orElse(null);
+        int minutes;
+        if (datetime.getMinute() >= 45) {
+            minutes = 45;
+        } else if (datetime.getMinute() >= 30) {
+            minutes = 30;
+        } else if (datetime.getHour() >= 15) {
+            minutes = 15;
+        } else {
+            minutes = 0;
+        }
+        var price = allPrices.stream().filter(ep -> ep.getDatum().equals(datetime.toLocalDate())
+                && ep.getUur() == datetime.getHour() && ep.getMinuut() == minutes).findFirst().orElse(null);
         if (price != null) {
             if (price.getMode() == EPrice.NONE) {
                 plan.plan(allPrices);
-                price = allPrices.stream()
-                        .filter(ep -> ep.getDatum().equals(datetime.toLocalDate()) && ep.getUur() == datetime.getHour())
+                price = allPrices
+                        .stream().filter(ep -> ep.getDatum().equals(datetime.toLocalDate())
+                                && ep.getUur() == datetime.getHour() && ep.getMinuut() == minutes)
                         .findFirst().orElse(null);
             }
 
