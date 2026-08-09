@@ -145,7 +145,7 @@ public class Plan {
         // logger.error("plan: planning");
         setSolarMode();
 
-        var hp = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() < ep2.getPrijs() ? 1 : -1)
+        var hp = prices.stream().sorted((ep1, ep2) -> ep1.getPrijs() <= ep2.getPrijs() ? 1 : -1)
                 .filter(high -> prices.stream()
                         .anyMatch(low -> low.getDatumTijd().isBefore(high.getDatumTijd())
                                 && high.getPrijs() >= low.getPrijs() * (1 + minMaxTreshold)))
@@ -176,7 +176,7 @@ public class Plan {
 
         processAfternoonHighs(afternoonStart, afternoon);
 
-        highPrices = highPrices.stream().sorted((ep1, ep2) -> ep1.getUur() > ep2.getUur() ? 1 : -1)
+        highPrices = highPrices.stream().sorted((ep1, ep2) -> ep1.getDatumTijd().compareTo(ep2.getDatumTijd()))
                 .collect(Collectors.toList());
 
         setPricesModes();
@@ -191,7 +191,7 @@ public class Plan {
                         .forEach(low -> lowPrices.add(low));
             }
             var morningLowNumber = Math.ceilDiv(morning.size(), 2);
-            lowPrices = lowPrices.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
+            lowPrices = lowPrices.stream().sorted((ep1, ep2) -> ep1.getPrijs() >= ep2.getPrijs() ? 1 : -1)
                     .limit(morningLowNumber).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));
 
             morningChargeStart = lowPrices.stream()
@@ -220,7 +220,7 @@ public class Plan {
         }
 
         var afternoonLowNumber = Math.ceilDiv(afternoon.size(), 2);
-        var al = afternoonLows.stream().sorted((ep1, ep2) -> ep1.getPrijs() > ep2.getPrijs() ? 1 : -1)
+        var al = afternoonLows.stream().sorted((ep1, ep2) -> ep1.getPrijs() >= ep2.getPrijs() ? 1 : -1)
                 .limit(afternoonLowNumber).collect(Collectors.toCollection(() -> new TreeSet<EPrice>()));
         al.forEach(low -> lowPrices.add(low));
 
