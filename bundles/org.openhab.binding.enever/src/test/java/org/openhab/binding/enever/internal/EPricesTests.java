@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openhab.binding.enever.internal.payloads.EneVerPayload;
 import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
@@ -60,6 +61,103 @@ public class EPricesTests {
 
     @Test
     public void testGetPrice() {
+        var plan = "[[2036-08-10T00:00 : 0.320034(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T00:15 : 0.313354(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T00:30 : 0.315157(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T00:45 : 0.303723(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T01:00 : 0.304969(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T01:15 : 0.299536(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T01:30 : 0.300347(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T01:45 : 0.296729(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T02:00 : 0.299282(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T02:15 : 0.289614(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T02:30 : 0.285391(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T02:45 : 0.284447(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T03:00 : 0.286323(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T03:15 : 0.285415(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T03:30 : 0.28694(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T03:45 : 0.288102(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T04:00 : 0.285065(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T04:15 : 0.286831(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T04:30 : 0.291877(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T04:45 : 0.295906(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T05:00 : 0.285863(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T05:15 : 0.296197(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T05:30 : 0.311406(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T05:45 : 0.313729(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T06:00 : 0.314528(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T06:15 : 0.320215(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T06:30 : 0.324377(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T06:45 : 0.329084(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T07:00 : 0.335425(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T07:15 : 0.329314(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T07:30 : 0.316851(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T07:45 : 0.294563(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T08:00 : 0.333283(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T08:15 : 0.313984(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T08:30 : 0.305126(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T08:45 : 0.277611(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T09:00 : 0.312858(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T09:15 : 0.288295(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T09:30 : 0.268403(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T09:45 : 0.261796(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T10:00 : 0.261203(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T10:15 : 0.251911(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T10:30 : 0.245086(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T10:45 : 0.23975(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T11:00 : 0.228388(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T11:15 : 0.216796(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T11:30 : 0.200703(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T11:45 : 0.180884(mode=to_full)]\r\n" + //
+                ", [2036-08-10T12:00 : 0.18438(mode=to_full)]\r\n" + //
+                ", [2036-08-10T12:15 : 0.170974(mode=to_full)]\r\n" + //
+                ", [2036-08-10T12:30 : 0.167041(mode=to_full)]\r\n" + //
+                ", [2036-08-10T12:45 : 0.160495(mode=to_full)]\r\n" + //
+                ", [2036-08-10T13:00 : 0.16807(mode=to_full)]\r\n" + //
+                ", [2036-08-10T13:15 : 0.155776(mode=to_full)]\r\n" + //
+                ", [2036-08-10T13:30 : 0.15286(mode=to_full)]\r\n" + //
+                ", [2036-08-10T13:45 : 0.148347(mode=to_full)]\r\n" + //
+                ", [2036-08-10T14:00 : 0.149726(mode=to_full)]\r\n" + //
+                ", [2036-08-10T14:15 : 0.15718(mode=to_full)]\r\n" + //
+                ", [2036-08-10T14:30 : 0.162867(mode=to_full)]\r\n" + //
+                ", [2036-08-10T14:45 : 0.177169(mode=to_full)]\r\n" + //
+                ", [2036-08-10T15:00 : 0.165988(mode=to_full)]\r\n" + //
+                ", [2036-08-10T15:15 : 0.180266(mode=to_full)]\r\n" + //
+                ", [2036-08-10T15:30 : 0.195512(mode=to_full)]\r\n" + //
+                ", [2036-08-10T15:45 : 0.21405(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T16:00 : 0.204781(mode=standby)]\r\n" + //
+                ", [2036-08-10T16:15 : 0.224371(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T16:30 : 0.235321(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T16:45 : 0.25162(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T17:00 : 0.252673(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T17:15 : 0.261397(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T17:30 : 0.276631(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T17:45 : 0.288719(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T18:00 : 0.277635(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T18:15 : 0.297878(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T18:30 : 0.307087(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T18:45 : 0.326979(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T19:00 : 0.307292(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T19:15 : 0.332968(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T19:30 : 0.339974(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T19:45 : 0.360048(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T20:00 : 0.347537(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T20:15 : 0.362807(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T20:30 : 0.372487(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T20:45 : 0.369026(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T21:00 : 0.380909(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T21:15 : 0.365433(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T21:30 : 0.356745(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T21:45 : 0.343229(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T22:00 : 0.356503(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T22:15 : 0.342697(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T22:30 : 0.342661(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T22:45 : 0.337264(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T23:00 : 0.338994(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T23:15 : 0.330875(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T23:30 : 0.329024(mode=zero_discharge_only)]\r\n" + //
+                ", [2036-08-10T23:45 : 0.322514(mode=zero_discharge_only)]\r\n" + //
+                "]";
         var prices = new EPrices(0.40, 0.15, 16);
         var pr1 = gson.fromJson(testDataE1, EneVerPayload.class);
         // var pr2 = gson.fromJson(testDataE2, EneVerPayload.class);
@@ -75,7 +173,12 @@ public class EPricesTests {
         // logger.info("plus 2: " + prices.getPriceFor(LocalDateTime.now().plusHours(2)).toString());
         // logger.info("now: " + prices.getPriceFor(LocalDateTime.now()).toString());
 
-        logger.info("prijzen: " + prices.getAllPrices().toString());
+        Assertions.assertEquals(plan.replace("\r\n", "\n"), prices.getAllPrices().toString());
+        var now = LocalDateTime.now().withYear(2036).withMonth(8).withDayOfMonth(10).withHour(10).withMinute(18);
+        logger.info("now: " + now);
+        logger.info("price: " + prices.getPriceFor(now));
+        Assertions.assertEquals(0.251911, prices.getPriceFor(now).getPrijs(), 0.000001);
+        
     }
 
     // @Test
