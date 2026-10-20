@@ -22,6 +22,7 @@
 			<channel id="cop" typeId="channel-cop"/>
 			<channel id="total" typeId="channel-total"/>
 			<channel id="heatpump" typeId="channel-heatpump"/>
+			<channel id="power" typeId="channel-heatpump"/>
 			<channel id="cv" typeId="channel-cv"/>
 		</channels>
 

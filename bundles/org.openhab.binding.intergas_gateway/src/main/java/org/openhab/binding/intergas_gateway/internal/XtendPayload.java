@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -42,6 +42,9 @@ public class XtendPayload {
     @SerializedName("5088")
     private double cv = 0;
 
+    @SerializedName("50f2")
+    private double power = 0;
+
     public double getSetpoint() {
         return roomSetpoint / 100;
     }
@@ -64,6 +67,10 @@ public class XtendPayload {
 
     public double getRoomTemperature() {
         return roomTemperature / 100;
+    }
+
+    public double getPower() {
+        return power;
     }
 
     @Override

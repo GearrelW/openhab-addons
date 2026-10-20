@@ -71,7 +71,8 @@ public class EPrices {
     }
 
     public EPrice getPriceFor(LocalDateTime datetime) {
-        var price = allPrices.stream().filter(ep -> ep.getDatumTijd().isBefore(datetime)).reduce((first, second) -> second).orElse(null);       
+        var price = allPrices.stream().filter(ep -> ep.getDatumTijd().isBefore(datetime))
+                .reduce((first, second) -> second).orElse(null);
         if (price != null) {
             if (price.getMode() == EPrice.NONE) {
                 plan.plan(allPrices);

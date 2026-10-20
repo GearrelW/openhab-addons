@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -30,7 +30,6 @@ import org.openhab.core.library.unit.Units;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.thing.binding.ThingHandlerService;
 import org.openhab.core.types.Command;
@@ -88,13 +87,13 @@ public class IntergasGatewayHandler extends BaseThingHandler {
             try {
                 dataResult = HttpUtil.executeUrl("GET", gatewayURL + "&setpoint=" + setPoint + "&thermostat=0", 30000);
             } catch (IOException e) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                        String.format("Unable to query device data: %s", e.getMessage()));
+                // updateStatus(ThingStatus.OFFLINE, String.format("Unable to query device data: %s", e.getMessage()));
+                updateStatus(ThingStatus.OFFLINE);
             }
             if (dataResult != null) {
                 GatewayPayload payload = gson.fromJson(dataResult, GatewayPayload.class);
                 if (payload != null) {
-                    // updateSetpointState(payload.getRoomSetPointTemperature());
+                    updateSetpointState(payload.getRoomSetPointTemperature());
                 }
             }
             updateSetpointState(setPoint);
@@ -127,8 +126,8 @@ public class IntergasGatewayHandler extends BaseThingHandler {
      */
     private boolean configure() {
         if (config.intergasGateway.trim().isEmpty() || config.xtendGateway.trim().isEmpty()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                    "Missing ipAddress/host configuration");
+            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Missing ipAddress/host configuration");
+            updateStatus(ThingStatus.OFFLINE);
             return false;
         } else {
             updateStatus(ThingStatus.UNKNOWN);
@@ -146,13 +145,15 @@ public class IntergasGatewayHandler extends BaseThingHandler {
             dataResult = HttpUtil.executeUrl("GET", url, 30000);
 
             if (dataResult == null || dataResult.trim().isEmpty()) {
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Device returned empty data");
+                // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Device returned empty data");
+                updateStatus(ThingStatus.OFFLINE);
                 return null;
             }
 
         } catch (IOException e) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-                    String.format("Unable to query device data: %s", e.getMessage()));
+            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, String.format("Unable to query device data:
+            // %s", e.getMessage()));
+            updateStatus(ThingStatus.OFFLINE);
         }
 
         // GatewayPayload payload = gson.fromJson(dataResult, GatewayPayload.class);
@@ -208,6 +209,8 @@ public class IntergasGatewayHandler extends BaseThingHandler {
                         new QuantityType<>(payload.getTotal(), Units.WATT));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_WARMTEPOMP_ENERGIE,
                         new QuantityType<>(payload.getHeatpump(), Units.WATT));
+                updateState(IntergasGatewayBindingConstants.CHANNEL_WARMTEPOMP_POWER,
+                        new QuantityType<>(payload.getPower(), Units.WATT));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_CV_KETEL_ENERGIE,
                         new QuantityType<>(payload.getCv(), Units.WATT));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_COP, new DecimalType(payload.getCop()));
