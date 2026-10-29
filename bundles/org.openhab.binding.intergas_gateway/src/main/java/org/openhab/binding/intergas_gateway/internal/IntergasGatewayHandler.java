@@ -15,6 +15,7 @@ package org.openhab.binding.intergas_gateway.internal;
 import static org.openhab.binding.intergas_gateway.internal.IntergasGatewayBindingConstants.CHANNEL_SET_POINT;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
@@ -62,6 +63,7 @@ public class IntergasGatewayHandler extends BaseThingHandler {
     private boolean heaterOn = false;
 
     private double lastSetpoint = 0.0;
+    private int dailyTotalPower = 0;
 
     protected String gatewayURL = "";
     protected String xtendURL = "";
@@ -173,6 +175,10 @@ public class IntergasGatewayHandler extends BaseThingHandler {
     protected void pollData() {
         @Nullable
         String dataResult;
+        var now = LocalDateTime.now();
+        if (now.getHour() == 0 && now.getMinute() < 5) {
+            dailyTotalPower = 0;
+        }
 
         // dataResult = executeUrl(gatewayURL);
         // if (dataResult == null) {
@@ -200,6 +206,9 @@ public class IntergasGatewayHandler extends BaseThingHandler {
             updateStatus(ThingStatus.ONLINE);
 
             if (payload.getRoomTemperature() > 0) {
+                if (dailyTotalPower == 0) {
+                    dailyTotalPower = payload.getTotalPower();
+                }
                 updateState(IntergasGatewayBindingConstants.CHANNEL_ROOM_TEMPERATURE,
                         new QuantityType<>(payload.getRoomTemperature(), SIUnits.CELSIUS));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_SET_POINT,
@@ -211,8 +220,12 @@ public class IntergasGatewayHandler extends BaseThingHandler {
                         new QuantityType<>(payload.getHeatpump(), Units.WATT));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_WARMTEPOMP_POWER,
                         new QuantityType<>(payload.getPower(), Units.WATT));
+                updateState(IntergasGatewayBindingConstants.CHANNEL_WARMTEPOMP_TOTAL_POWER,
+                        new QuantityType<>(payload.getTotalPower(), Units.KILOWATT_HOUR));
+                updateState(IntergasGatewayBindingConstants.CHANNEL_WARMTEPOMP_TOTAL_POWER_DAG,
+                        new QuantityType<>(payload.getTotalPower() - dailyTotalPower, Units.KILOWATT_HOUR));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_CV_KETEL_ENERGIE,
-                        new QuantityType<>(payload.getCv(), Units.WATT));
+                        new QuantityType<>(payload.getCv(), Units.WATT_HOUR));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_COP, new DecimalType(payload.getCop()));
             }
         } else {

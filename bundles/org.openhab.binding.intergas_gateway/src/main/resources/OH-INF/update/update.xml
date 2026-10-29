@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<update:update-descriptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:update="https://openhab.org/schemas/update-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/update-description/v1.0.0 https://openhab.org/schemas/update-description-1.0.0.xsd">
+
+	<thing-type uid="intergas_gateway:intergas_xtend">
+
+		<instruction-set targetVersion="3">
+			<add-channel id="total_power" typeId="channel-heatpump">
+				<type>intergas_gateway:channel-heatpump</type>
+			</add-channel>
+
+		</instruction-set>
+		<instruction-set targetVersion="4">
+			<add-channel id="total_power_dag" typeId="channel-heatpump">
+				<type>intergas_gateway:channel-heatpump</type>
+			</add-channel>
+
+		</instruction-set>
+		<instruction-set targetVersion="5">
+			<update-channel id="total_power_dag">
+				<type>intergas_gateway:channel-heatpump-energy</type>
+			</update-channel>
+			<update-channel id="total_power">
+				<type>intergas_gateway:channel-heatpump-energy</type>
+			</update-channel>
+
+		</instruction-set>
+
+	</thing-type>
+
+</update:update-descriptions>

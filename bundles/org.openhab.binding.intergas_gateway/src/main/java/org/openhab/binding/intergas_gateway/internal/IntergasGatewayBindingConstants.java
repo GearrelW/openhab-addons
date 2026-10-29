@@ -37,5 +37,7 @@ public class IntergasGatewayBindingConstants {
     public static final String CHANNEL_TOTAL_ENERGIE = "total";
     public static final String CHANNEL_WARMTEPOMP_ENERGIE = "heatpump";
     public static final String CHANNEL_WARMTEPOMP_POWER = "power";
+    public static final String CHANNEL_WARMTEPOMP_TOTAL_POWER = "total_power";
+    public static final String CHANNEL_WARMTEPOMP_TOTAL_POWER_DAG = "total_power_dag";
     public static final String CHANNEL_CV_KETEL_ENERGIE = "cv";
 }

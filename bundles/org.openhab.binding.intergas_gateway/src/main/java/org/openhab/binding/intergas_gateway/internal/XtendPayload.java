@@ -45,6 +45,9 @@ public class XtendPayload {
     @SerializedName("50f2")
     private double power = 0;
 
+    @SerializedName("63b3")
+    private double totalPower = 0;
+
     public double getSetpoint() {
         return roomSetpoint / 100;
     }
@@ -71,6 +74,10 @@ public class XtendPayload {
 
     public double getPower() {
         return power;
+    }
+
+    public int getTotalPower() {
+        return (int) totalPower;
     }
 
     @Override
