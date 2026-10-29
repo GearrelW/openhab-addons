@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -68,14 +68,10 @@ public class EneVerHandler extends BaseThingHandler {
 
     private String token = "";
 
-    private String controlStrategy = EPrices.SOLAR_CONTROL;
-
     private double treshold = 0;
     private double minMaxTreshold = 0;
 
-    private int numberOfChargingMoments = 0;
-
-    private EPrices ePrices = new EPrices(minMaxTreshold, treshold, numberOfChargingMoments);
+    private EPrices ePrices = new EPrices(minMaxTreshold, treshold);
 
     private @Nullable PayloadPriceItem gasPrice = new PayloadPriceItem();
 
@@ -106,7 +102,7 @@ public class EneVerHandler extends BaseThingHandler {
     public void initialize() {
         config = getConfigAs(EneVerConfiguration.class);
         if (configure()) {
-            ePrices = new EPrices(minMaxTreshold, treshold, numberOfChargingMoments);
+            ePrices = new EPrices(minMaxTreshold, treshold);
 
             // get prices for today
             gasPrice = retrieveGasPrice();
@@ -168,12 +164,11 @@ public class EneVerHandler extends BaseThingHandler {
     @SuppressWarnings("null")
     private boolean configure() {
         if (config == null || config.token.trim().isEmpty()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Missing token configuration");
+            updateStatus(ThingStatusDetail.CONFIGURATION_ERROR, "Missing token configuration");
             return false;
         } else {
             updateStatus(ThingStatus.UNKNOWN);
             token = config.token;
-            numberOfChargingMoments = config.numberOfChargingMoments;
             debug = config.debug;
             treshold = (double) config.priceTreshold / 100;
             minMaxTreshold = (double) config.minMaxTreshold / 100;
@@ -209,9 +204,6 @@ public class EneVerHandler extends BaseThingHandler {
                     .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
             ePrices.addPrices(prices);
 
-            updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY,
-                    new StringType(ePrices.getControlStrategy()));
-
             logger.info("Retrieved for " + date);
         }
 
@@ -238,7 +230,7 @@ public class EneVerHandler extends BaseThingHandler {
         try {
             dataResult = HttpUtil.executeUrl("GET", url, 30000);
         } catch (IOException e) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+            updateStatus(ThingStatusDetail.COMMUNICATION_ERROR,
                     String.format("Request failed: %s", e.getMessage()));
         }
 
@@ -253,13 +245,13 @@ public class EneVerHandler extends BaseThingHandler {
         }
 
         if (payload == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+            updateStatus(ThingStatusDetail.COMMUNICATION_ERROR,
                     "Unable to parse data response from " + url);
             return null;
         }
 
         if (!payload.getStatus()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Results from API are empty");
+            updateStatus(ThingStatusDetail.COMMUNICATION_ERROR, "Results from API are empty");
             return null;
         }
         return payload;
@@ -270,7 +262,7 @@ public class EneVerHandler extends BaseThingHandler {
 
         var maxPrice = ePrices.getMaxPriceFor(today);
         if (maxPrice != null) {
-            var ph = maxPrice.getDatumTijd().atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
+            var ph = maxPrice.getDatumTijd().toInstant();
             updateState(EneVerBindingConstants.CHANNEL_PEAK_HOUR, new DateTimeType(ph));
         }
 
@@ -278,12 +270,10 @@ public class EneVerHandler extends BaseThingHandler {
         if (average != null) {
             updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE, new DecimalType(average));
         }
-        updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_STRATEGY,
-                new StringType(ePrices.getControlStrategy()));
     }
 
     private void updateElectricityChannels() {
-        var now = LocalDateTime.now();
+        var now = ZonedDateTime.now();
         var prijs = getElectriciteitPrijs(now);
         if (prijs != null) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(prijs.getPrijs()));
@@ -295,8 +285,6 @@ public class EneVerHandler extends BaseThingHandler {
             } else {
                 updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("neutral"));
             }
-
-            updateState(EneVerBindingConstants.CHANNEL_BATTERY_CONTROL_MODE, new StringType(prijs.getMode()));
         }
         prijs = getElectriciteitPrijs(now.plusMinutes(15));
         if (prijs != null) {
@@ -312,40 +300,16 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     private void updateHourlyChannels() {
-        var now = LocalDateTime.now();
+        var now = ZonedDateTime.now();
         logger.debug("updating channels for " + now);
 
         var gasPrijs = getGasPrijs();
         if (gasPrijs != 0) {
             updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrijs));
         }
-
-        var chargeStart = ePrices.getPlan().getChargeStart(now);
-        if (chargeStart != null) {
-            var cs = chargeStart.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
-            updateState(EneVerBindingConstants.CHANNEL_CHARGE_START, new DateTimeType(cs));
-        }
-
-        var chargeEnd = ePrices.getPlan().getChargeEnd(now);
-        if (chargeEnd != null) {
-            var ce = chargeEnd.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
-            updateState(EneVerBindingConstants.CHANNEL_CHARGE_END, new DateTimeType(ce));
-        }
-
-        var dischargeStart = ePrices.getPlan().getDischargeStart(now);
-        if (dischargeStart != null) {
-            var ds = dischargeStart.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
-            updateState(EneVerBindingConstants.CHANNEL_DISCHARGE_START, new DateTimeType(ds));
-        }
-
-        var dischargeEnd = ePrices.getPlan().getDischargeEnd(now);
-        if (dischargeEnd != null) {
-            var de = dischargeEnd.atZone(ZoneId.of("Europe/Amsterdam")).toInstant();
-            updateState(EneVerBindingConstants.CHANNEL_DISCHARGE_END, new DateTimeType(de));
-        }
     }
 
-    private EPrice getElectriciteitPrijs(LocalDateTime now) {
+    private EPrice getElectriciteitPrijs(ZonedDateTime now) {
         var prijs = ePrices.getPriceFor(now);
         if (prijs == null) {
             retrieveElectricityPrices();

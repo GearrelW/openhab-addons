@@ -13,9 +13,11 @@
 package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,37 +27,41 @@ public class EPrices {
     public static final String SOLAR_CONTROL = "solar";
     public static final String PRICES_CONTROL = "prices";
 
+    private Map<LocalDate, Double> averagePrices = new Hashtable<>();
+    private Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
+
     private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
 
     private TreeSet<EPrice> allPrices = new TreeSet<EPrice>();
-    private Plan plan = new Plan();
     private Double treshold = 0.15;
 
-    public EPrices(Double minMaxTreshold, Double priceTreshold, int numberOfChargingMoments) {
+    public EPrices(Double minMaxTreshold, Double priceTreshold) {
         this.treshold = priceTreshold;
-        this.plan = new Plan(numberOfChargingMoments, minMaxTreshold);
     }
 
-    public void addPrices(Map<LocalDateTime, Double> prices) {
+    public void addPrices(Map<ZonedDateTime, Double> prices) {
         prices.entrySet().forEach(entry -> {
             allPrices.add(new EPrice(entry.getKey(), entry.getValue()));
         });
-        allPrices.removeIf(ep -> ep.getDatumTijd().isBefore(LocalDateTime.now().minusHours(1)));
+        allPrices.removeIf(ep -> ep.getDatumTijd().isBefore(ZonedDateTime.now().minusHours(1)));
         allPrices.stream().sorted();
 
-        plan.plan(allPrices);
+        allPrices.stream()
+                .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)))
+                .forEach((date, avg) -> {
+                    if (!averagePrices.containsKey(date)) {
+                        averagePrices.put(date, avg);
+                    }
+                });
+
+        allPrices.stream().collect(Collectors.groupingBy(EPrice::getDatum,
+                Collectors.maxBy((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())))).forEach((date, max) -> {
+                    maxPrices.put(date, max.get());
+                });
     }
 
     public TreeSet<EPrice> getAllPrices() {
         return allPrices;
-    }
-
-    public Plan getPlan() {
-        return plan;
-    }
-
-    public String getControlStrategy() {
-        return plan.isSolarModeEnabled() ? SOLAR_CONTROL : PRICES_CONTROL;
     }
 
     public boolean containsDate(LocalDate date) {
@@ -63,22 +69,18 @@ public class EPrices {
     }
 
     public EPrice getMaxPriceFor(LocalDate date) {
-        return plan.getMaxPrices().get(date);
+        return maxPrices.get(date);
     }
 
     public Double getAveragePriceFor(LocalDate date) {
-        return plan.getAveragePrices().get(date);
+        return averagePrices.get(date);
     }
 
-    public EPrice getPriceFor(LocalDateTime datetime) {
+    public EPrice getPriceFor(ZonedDateTime datetime) {
         var price = allPrices.stream().filter(ep -> ep.getDatumTijd().isBefore(datetime))
                 .reduce((first, second) -> second).orElse(null);
         if (price != null) {
-            if (price.getMode() == EPrice.NONE) {
-                plan.plan(allPrices);
-            }
-
-            var avgPrice = plan.getAveragePrices().get(datetime.toLocalDate());
+            var avgPrice = averagePrices.get(datetime.toLocalDate());
 
             if (price.getPrijs() <= (avgPrice * (1 - treshold))) {
                 price.isGoedkoop = true;

@@ -36,12 +36,6 @@ public class EneVerBindingConstants {
     public static final String CHANNEL_AVG_ELECTRICITY_PRICE = "average-electricity-price";
     public static final String CHANNEL_GAS_DAILY_PRICE = "gas-price";
     public static final String CHANNEL_HOUR_INDICATION = "indication-hour";
-    public static final String CHANNEL_BATTERY_CONTROL_MODE = "battery-control-mode";
-    public static final String CHANNEL_BATTERY_CONTROL_STRATEGY = "battery-control-strategy";
     public static final String CHANNEL_PRICE_WARNING = "warning-hour";
     public static final String CHANNEL_PEAK_HOUR = "peak-hour";
-    public static final String CHANNEL_CHARGE_START = "charge-start";
-    public static final String CHANNEL_CHARGE_END = "charge-end";
-    public static final String CHANNEL_DISCHARGE_START = "discharge-start";
-    public static final String CHANNEL_DISCHARGE_END = "discharge-end";
 }

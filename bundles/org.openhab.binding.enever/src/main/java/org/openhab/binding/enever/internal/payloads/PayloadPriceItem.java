@@ -13,7 +13,6 @@
 package org.openhab.binding.enever.internal.payloads;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
@@ -34,11 +33,11 @@ public class PayloadPriceItem {
     @SerializedName(value = "prijsZP", alternate = "priceTotalTaxIncluded")
     protected String prijs = "";
 
-    public LocalDateTime getDatumTijd() {
+    public ZonedDateTime getDatumTijd() {
         try {
-            return ZonedDateTime.parse(datum).withSecond(0).withSecond(0).toLocalDateTime();
+            return ZonedDateTime.parse(datum).withSecond(0).withSecond(0);
         } catch (DateTimeParseException ex) {
-            return LocalDateTime.MIN.withMinute(0).withSecond(0).withSecond(0);
+            return ZonedDateTime.now().withMinute(0).withSecond(0).withSecond(0);
         }
     }
 

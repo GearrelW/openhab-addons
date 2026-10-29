@@ -13,27 +13,18 @@
 package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 public class EPrice implements Comparable<EPrice> {
 
-    protected static final String NONE = "";
-    protected static final String ZERO = "zero";
-    protected static final String STANDBY = "standby";
-    protected static final String TO_FULL = "to_full";
-    protected static final String ZERO_DISCHARGE_ONLY = "zero_discharge_only";
-    protected static final String ZERO_CHARGE_ONLY = "zero_charge_only";
-
-    private LocalDateTime datum = LocalDateTime.now();
+    private ZonedDateTime datum = ZonedDateTime.now();
 
     private Double prijs = 0.0;
-
-    private String mode = NONE;
 
     public Boolean isDuur = false;
     public Boolean isGoedkoop = false;
 
-    public EPrice(LocalDateTime datum, Double prijs) {
+    public EPrice(ZonedDateTime datum, Double prijs) {
         this.datum = datum;
         this.prijs = prijs;
     }
@@ -46,7 +37,7 @@ public class EPrice implements Comparable<EPrice> {
         return datum.toLocalDate();
     }
 
-    public LocalDateTime getDatumTijd() {
+    public ZonedDateTime getDatumTijd() {
         return datum.withSecond(0).withNano(0);
     }
 
@@ -58,14 +49,6 @@ public class EPrice implements Comparable<EPrice> {
         return datum.getMinute();
     }
 
-    public String getMode() {
-        return mode;
-    }
-
-    public void setMode(String status) {
-        this.mode = status;
-    }
-
     @Override
     public boolean equals(Object o) {
         return datum.equals(((EPrice) o).datum);
@@ -73,7 +56,7 @@ public class EPrice implements Comparable<EPrice> {
 
     @Override
     public String toString() {
-        return "[" + this.getDatumTijd() + " : " + this.prijs + "(mode=" + mode + ")]\n";
+        return "[" + this.getDatumTijd() + " : " + this.prijs + "]\n";
     }
 
     @Override

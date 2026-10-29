@@ -27,8 +27,6 @@ public class EneVerConfiguration {
      */
     public String token = "";
 
-    public int numberOfChargingMoments = 0;
-
     public int priceTreshold = 0;
 
     public int minMaxTreshold = 0;
