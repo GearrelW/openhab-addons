@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -77,6 +78,7 @@ public abstract class BaseMetadata {
             Map.entry("min/sec", ""), // special case ZUI sends min/sec as unit, but is actually dimensionless
             Map.entry("°(C/F)", ""), // special case where Zwave JS sends °F/C as unit, but is actually dimensionless
             Map.entry("°F/C", ""), // special case where Zwave JS sends °F/C as unit, but is actually dimensionless
+            Map.entry("°C/F", ""), // special case where Zwave JS sends °C/F as unit, but is actually dimensionless
             Map.entry("oC", "°C"), //
             Map.entry("%rH", "%") // ZUI uses %rH for relative humidity, but openHAB expects the % unit.
     );
@@ -273,7 +275,8 @@ public abstract class BaseMetadata {
         if (input instanceof Number numberInput) {
             return "-" + numberInput.toString();
         } else if (input instanceof String strInput) {
-            return "-" + strInput.trim().toLowerCase().replaceAll(" ", "-").replaceAll("[^a-zA-Z0-9\\-]", "");
+            return "-"
+                    + strInput.trim().toLowerCase(Locale.ROOT).replaceAll(" ", "-").replaceAll("[^a-zA-Z0-9\\-]", "");
         }
         return "";
     }
