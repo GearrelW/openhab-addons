@@ -81,16 +81,32 @@ public class EPrices {
     }
 
     public EPrice getPriceFor(ZonedDateTime datetime) {
-        var price = allPrices.stream().filter(ep -> ep.getDatumTijd().isBefore(datetime))
-                .reduce((first, second) -> second).orElse(null);
+        // logger.debug("Getting price for {}", datetime);
+        // logger.debug("All prices: {}", allPrices);
+        // logger.debug("Average prices: {}", averagePrices);
+
+        int minutes = 45;
+        if (datetime.getMinute() < 15) {
+            minutes = 0;
+        } else if (datetime.getMinute() < 30) {
+            minutes = 15;
+        } else if (datetime.getMinute() < 45) {
+            minutes = 30;
+        }
+        var dt = datetime.withMinute(minutes).withSecond(0).withNano(0);
+
+        var price = allPrices.stream().filter(ep -> ep.getDatumTijd().isEqual(dt)).findFirst().orElse(null);
+        //logger.debug("Price for {} is {}", dt, price);
         if (price != null) {
             var avgPrice = averagePrices.get(datetime.toLocalDate());
 
-            if (price.getPrijs() <= (avgPrice * (1 - treshold))) {
-                price.isGoedkoop = true;
-            }
-            if (price.getPrijs() > (avgPrice * (1 + treshold))) {
-                price.isDuur = true;
+            if (avgPrice != null) {
+                if (price.getPrijs() <= (avgPrice * (1 - treshold))) {
+                    price.isGoedkoop = true;
+                }
+                if (price.getPrijs() > (avgPrice * (1 + treshold))) {
+                    price.isDuur = true;
+                }
             }
         }
 
