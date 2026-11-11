@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -44,10 +44,6 @@ public class PayloadPriceItem {
     public LocalDate getDatum() {
         return getDatumTijd().toLocalDate();
     }
-
-    // public void setDatum(String newDate) {
-    // datum = datum
-    // }
 
     public Double getPrijs() {
         try {

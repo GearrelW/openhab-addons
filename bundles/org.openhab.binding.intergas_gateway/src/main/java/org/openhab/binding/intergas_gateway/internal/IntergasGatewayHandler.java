@@ -178,6 +178,7 @@ public class IntergasGatewayHandler extends BaseThingHandler {
         var now = LocalDateTime.now();
         if (now.getHour() == 0 && now.getMinute() < 5) {
             dailyTotalPower = 0;
+            logger.info("Reset daily total power to 0");
         }
 
         // dataResult = executeUrl(gatewayURL);
@@ -208,6 +209,7 @@ public class IntergasGatewayHandler extends BaseThingHandler {
             if (payload.getRoomTemperature() > 0) {
                 if (dailyTotalPower == 0) {
                     dailyTotalPower = payload.getTotalPower();
+                    logger.info("Resetting daily total power");
                 }
                 updateState(IntergasGatewayBindingConstants.CHANNEL_ROOM_TEMPERATURE,
                         new QuantityType<>(payload.getRoomTemperature(), SIUnits.CELSIUS));
@@ -225,7 +227,7 @@ public class IntergasGatewayHandler extends BaseThingHandler {
                 updateState(IntergasGatewayBindingConstants.CHANNEL_WARMTEPOMP_TOTAL_POWER_DAG,
                         new QuantityType<>(payload.getTotalPower() - dailyTotalPower, Units.KILOWATT_HOUR));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_CV_KETEL_ENERGIE,
-                        new QuantityType<>(payload.getCv(), Units.WATT_HOUR));
+                        new QuantityType<>(payload.getCv(), Units.WATT));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_COP, new DecimalType(payload.getCop()));
             }
         } else {

@@ -12,13 +12,8 @@
  */
 package org.openhab.binding.enever.internal;
 
-import java.io.IOException;
-
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.automation.annotation.ActionInput;
-import org.openhab.core.automation.annotation.RuleAction;
-import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
 import org.openhab.core.thing.binding.ThingHandler;
@@ -51,16 +46,16 @@ public class EneVerActions implements ThingActions {
 
     // @RuleAction(label = "Set Prices", description = "Set Prices")
     // public void setPrices(@ActionInput(name = "gasPrice") int gasPrice,
-    //         @ActionInput(name = "electrcityPrice") int electrictyPrice) {
+    // @ActionInput(name = "electrcityPrice") int electrictyPrice) {
 
-    //     try {
-    //         var url = String.format("%s?e=%d&g=%d", handler.xtendURL, electrictyPrice, gasPrice);
-    //         HttpUtil.executeUrl("GET", url, 30000);
-    //     } catch (IOException e) {
-    //     }
+    // try {
+    // var url = String.format("%s?e=%d&g=%d", handler.xtendURL, electrictyPrice, gasPrice);
+    // HttpUtil.executeUrl("GET", url, 30000);
+    // } catch (IOException e) {
+    // }
     // }
 
     // public static void setPrices(ThingActions actions, int gasPrice, int electricityPrice) {
-    //     ((EneVerActions) actions).setPrices(gasPrice, electricityPrice);
+    // ((EneVerActions) actions).setPrices(gasPrice, electricityPrice);
     // }
 }

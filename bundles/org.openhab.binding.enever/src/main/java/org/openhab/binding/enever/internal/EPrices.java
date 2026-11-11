@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -30,7 +30,7 @@ public class EPrices {
     private Map<LocalDate, Double> averagePrices = new Hashtable<>();
     private Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
 
-    private final Logger logger = LoggerFactory.getLogger(EneVerHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(EPrices.class);
 
     private TreeSet<EPrice> allPrices = new TreeSet<EPrice>();
     private Double treshold = 0.15;
@@ -74,6 +74,10 @@ public class EPrices {
 
     public Double getAveragePriceFor(LocalDate date) {
         return averagePrices.get(date);
+    }
+
+    public boolean hasPriceFor(ZonedDateTime datetime) {
+        return getPriceFor(datetime) != null;
     }
 
     public EPrice getPriceFor(ZonedDateTime datetime) {
