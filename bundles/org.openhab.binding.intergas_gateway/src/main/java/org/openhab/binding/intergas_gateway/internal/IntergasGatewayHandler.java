@@ -15,11 +15,15 @@ package org.openhab.binding.intergas_gateway.internal;
 import static org.openhab.binding.intergas_gateway.internal.IntergasGatewayBindingConstants.CHANNEL_SET_POINT;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.naming.CommunicationException;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -41,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 
 /**
  * The {@link IntergasGatewayHandler} is responsible for handling commands, which are
@@ -58,7 +63,8 @@ public class IntergasGatewayHandler extends BaseThingHandler {
 
     private IntergasGatewayConfiguration config = new IntergasGatewayConfiguration();
 
-    private @Nullable ScheduledFuture<?> pollingJob;
+    protected ScheduledExecutorService executorService = this.scheduler;
+    private @Nullable ScheduledFuture<?> dataPollingJob;
 
     private boolean heaterOn = false;
 
@@ -67,6 +73,8 @@ public class IntergasGatewayHandler extends BaseThingHandler {
 
     protected String gatewayURL = "";
     protected String xtendURL = "";
+
+    protected final AtomicLong lifecycleGeneration = new AtomicLong();
 
     public IntergasGatewayHandler(Thing thing) {
         super(thing);
@@ -102,6 +110,14 @@ public class IntergasGatewayHandler extends BaseThingHandler {
         }
     }
 
+    protected final void updateStatusIfCurrent(long generation, ThingStatus status) {
+        synchronized (this) {
+            if (generation == lifecycleGeneration.get()) {
+                updateStatus(status);
+            }
+        }
+    }
+
     private void updateSetpointState(double temp) {
         if (temp < 40 && temp != lastSetpoint) {
             updateState(IntergasGatewayBindingConstants.CHANNEL_SET_POINT, new QuantityType<>(temp, SIUnits.CELSIUS));
@@ -114,10 +130,14 @@ public class IntergasGatewayHandler extends BaseThingHandler {
      */
     @Override
     public void initialize() {
+        long generation;
+        synchronized (this) {
+            generation = lifecycleGeneration.incrementAndGet();
+        }
         config = getConfigAs(IntergasGatewayConfiguration.class);
         if (configure()) {
-            pollingJob = scheduler.scheduleWithFixedDelay(this::pollingCode, 0, config.refreshInterval,
-                    TimeUnit.SECONDS);
+            dataPollingJob = executorService.scheduleWithFixedDelay(() -> retrieveData(generation), 0,
+                    config.refreshInterval, TimeUnit.SECONDS);
         }
     }
 
@@ -140,72 +160,67 @@ public class IntergasGatewayHandler extends BaseThingHandler {
         }
     }
 
-    private @Nullable String executeUrl(String url) {
-        @Nullable
-        String dataResult = null;
-        try {
-            dataResult = HttpUtil.executeUrl("GET", url, 30000);
+    /**
+     * The data polling loop
+     *
+     * @return true if data was retrieved and published for the current generation
+     */
+    protected boolean retrieveData(long generation) {
+        var now = ZonedDateTime.now();
+        if (generation != lifecycleGeneration.get()) {
+            logger.debug("Generation mismatch, aborting data retrieval");
+            return false;
+        }
 
-            if (dataResult == null || dataResult.trim().isEmpty()) {
-                // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Device returned empty data");
-                updateStatus(ThingStatus.OFFLINE);
-                return null;
+        try {
+            String xtendData = getXtendData();
+            synchronized (this) {
+                if (generation != lifecycleGeneration.get()) {
+                    logger.debug("Generation mismatch, aborting data retrieval");
+                    return false;
+                }
+                handleXtendData(xtendData);
+                updateStatus(ThingStatus.ONLINE);
             }
 
-        } catch (IOException e) {
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, String.format("Unable to query device data:
-            // %s", e.getMessage()));
-            updateStatus(ThingStatus.OFFLINE);
+            if (xtendData == null || xtendData.trim().isEmpty()) {
+                String intergasData = getIntergasData();
+                synchronized (this) {
+                    if (generation != lifecycleGeneration.get()) {
+                        logger.debug("Generation mismatch, aborting data retrieval");
+                        return false;
+                    }
+                    handleIntergasData(intergasData);
+                    updateStatus(ThingStatus.OFFLINE);
+                }
+            }
+            return true;
+        } catch (JsonSyntaxException | IOException | CommunicationException ex) {
+            updateStatusIfCurrent(generation, ThingStatus.OFFLINE);
+            logger.debug("Unable to get data from the API", ex);
+            return false;
         }
-
-        // GatewayPayload payload = gson.fromJson(dataResult, GatewayPayload.class);
-        // if (payload == null) {
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-        // "Unable to parse data response from device");
-        // return null;
-        // }
-        //
-        // if (payload.getNodeNr() == 0) {
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, "Results from API are empty");
-        // return null;
-        // }
-        return dataResult;
     }
 
-    protected void pollData() {
-        @Nullable
-        String dataResult;
-        var now = LocalDateTime.now();
-        if (now.getHour() == 0 && now.getMinute() < 5) {
-            dailyTotalPower = 0;
-            logger.info("Reset daily total power to 0");
-        }
+    /**
+     * Get the content of the response from the given url. If the bearer token is invalid a SecurityException is thrown.
+     * 
+     * @param url
+     * @return the content of the response from the given url
+     * @throws IOException
+     */
+    public String getContentFrom(String url) throws IOException {
+        logger.debug("Retrieving data from {}", url);
+        return HttpUtil.executeUrl("GET", url, 30000);
+    }
 
-        // dataResult = executeUrl(gatewayURL);
-        // if (dataResult == null) {
-        // return;
-        // }
+    public String getXtendData() throws IOException {
+        return getContentFrom(xtendURL);
+    }
 
-        // GatewayPayload gsPayload = gson.fromJson(dataResult, GatewayPayload.class);
-        // if (gsPayload != null) {
-        // updateState(IntergasGatewayBindingConstants.CHANNEL_ROOM_TEMPERATURE,
-        // new QuantityType<>(gsPayload.getRoomTemperature(), SIUnits.CELSIUS));
-        // updateState(IntergasGatewayBindingConstants.CHANNEL_SET_POINT,
-        // new QuantityType<>(gsPayload.getRoomSetPointTemperature(), SIUnits.CELSIUS));
-        //
-        // updateStatus(ThingStatus.ONLINE);
-        // }
-
-        dataResult = executeUrl(xtendURL);
-        if (dataResult == null) {
-            dataResult = "";
-        }
-        // logger.info("Data = " + dataResult);
-
-        XtendPayload payload = gson.fromJson(dataResult, XtendPayload.class);
+    protected void handleXtendData(String data) throws JsonSyntaxException, CommunicationException {
+        XtendPayload payload = gson.fromJson(data, XtendPayload.class);
         if (payload != null) {
-            updateStatus(ThingStatus.ONLINE);
-
             if (payload.getRoomTemperature() > 0) {
                 if (dailyTotalPower == 0) {
                     dailyTotalPower = payload.getTotalPower();
@@ -230,38 +245,32 @@ public class IntergasGatewayHandler extends BaseThingHandler {
                         new QuantityType<>(payload.getCv(), Units.WATT));
                 updateState(IntergasGatewayBindingConstants.CHANNEL_COP, new DecimalType(payload.getCop()));
             }
-        } else {
-            dataResult = executeUrl(gatewayURL);
-            if (dataResult == null) {
-                return;
-            }
-            updateStatus(ThingStatus.ONLINE);
-
-            GatewayPayload gsPayload = gson.fromJson(dataResult, GatewayPayload.class);
-            if (gsPayload != null) {
-                updateState(IntergasGatewayBindingConstants.CHANNEL_ROOM_TEMPERATURE,
-                        new QuantityType<>(gsPayload.getRoomTemperature(), SIUnits.CELSIUS));
-                updateState(IntergasGatewayBindingConstants.CHANNEL_SET_POINT,
-                        new QuantityType<>(gsPayload.getRoomSetPointTemperature(), SIUnits.CELSIUS));
-            }
         }
+    }
 
-        // handleDataPayload(dataPayload);
+    private String getIntergasData() throws IOException {
+        return getContentFrom(gatewayURL);
+    }
+
+    protected void handleIntergasData(String data) throws JsonSyntaxException, CommunicationException {
+        GatewayPayload gsPayload = gson.fromJson(data, GatewayPayload.class);
+        if (gsPayload != null) {
+            updateState(IntergasGatewayBindingConstants.CHANNEL_ROOM_TEMPERATURE,
+                    new QuantityType<>(gsPayload.getRoomTemperature(), SIUnits.CELSIUS));
+            updateState(IntergasGatewayBindingConstants.CHANNEL_SET_POINT,
+                    new QuantityType<>(gsPayload.getRoomSetPointTemperature(), SIUnits.CELSIUS));
+        }
     }
 
     @Override
     public void dispose() {
-        var job = pollingJob;
+        synchronized (this) {
+            lifecycleGeneration.incrementAndGet();
+        }
+        var job = dataPollingJob;
         if (job != null) {
             job.cancel(true);
         }
-        pollingJob = null;
-    }
-
-    /**
-     * The actual polling loop
-     */
-    protected void pollingCode() {
-        pollData();
+        dataPollingJob = null;
     }
 }

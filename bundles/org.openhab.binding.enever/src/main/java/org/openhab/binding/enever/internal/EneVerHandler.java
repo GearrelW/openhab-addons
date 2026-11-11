@@ -17,11 +17,9 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -29,8 +27,6 @@ import javax.naming.CommunicationException;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.api.Request;
 import org.openhab.binding.enever.internal.payloads.EneVerPayload;
 import org.openhab.binding.enever.internal.payloads.IPayload;
 import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
@@ -229,18 +225,6 @@ public class EneVerHandler extends BaseThingHandler {
     public String getContentFrom(String url) throws IOException {
         logger.debug("Retrieving data from {}", url);
         return HttpUtil.executeUrl("GET", url, 30000);
-    }
-
-    private @Nullable ContentResponse sendRequest(Request request) throws CommunicationException {
-        try {
-            return request.timeout(20, TimeUnit.SECONDS).send();
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt(); // restore interrupt status
-            return null;
-        } catch (TimeoutException | ExecutionException ex) {
-            logger.debug("Error sending request", ex);
-            throw new CommunicationException("Error sending request");
-        }
     }
 
     public String getElectricityData(boolean forToday) throws IOException {
