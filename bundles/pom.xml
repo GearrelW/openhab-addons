@@ -109,6 +109,7 @@
     <module>org.openhab.binding.buienradar</module>
     <module>org.openhab.binding.caddx</module>
     <module>org.openhab.binding.caldav</module>
+    <module>org.openhab.binding.candy</module>
     <module>org.openhab.binding.casokitchen</module>
     <module>org.openhab.binding.cbus</module>
     <module>org.openhab.binding.chatgpt</module>
@@ -166,6 +167,7 @@
     <module>org.openhab.binding.evcc</module>
     <module>org.openhab.binding.evohome</module>
     <module>org.openhab.binding.exec</module>
+    <module>org.openhab.binding.eyeonwater</module>
     <module>org.openhab.binding.feed</module>
     <module>org.openhab.binding.feican</module>
     <module>org.openhab.binding.fenecon</module>
@@ -192,6 +194,7 @@
     <module>org.openhab.binding.govee</module>
     <module>org.openhab.binding.gpio</module>
     <module>org.openhab.binding.globalcache</module>
+    <module>org.openhab.binding.gme</module>
     <module>org.openhab.binding.gpstracker</module>
     <module>org.openhab.binding.gree</module>
     <module>org.openhab.binding.gridbox</module>
@@ -201,6 +204,7 @@
     <module>org.openhab.binding.guntamatic</module>
     <module>org.openhab.binding.haassohnpelletstove</module>
     <module>org.openhab.binding.harmonyhub</module>
+    <module>org.openhab.binding.hasslink</module>
     <module>org.openhab.binding.haywardomnilogic</module>
     <module>org.openhab.binding.hccrubbishcollection</module>
     <module>org.openhab.binding.hdanywhere</module>
@@ -307,6 +311,7 @@
     <module>org.openhab.binding.modbus.stiebeleltron</module>
     <module>org.openhab.binding.modbus.helioseasycontrols</module>
     <module>org.openhab.binding.monopriceaudio</module>
+    <module>org.openhab.binding.motionblinds</module>
     <module>org.openhab.binding.mpd</module>
     <module>org.openhab.binding.mqtt</module>
     <module>org.openhab.binding.mqtt.awtrixlight</module>
@@ -459,6 +464,7 @@
     <module>org.openhab.binding.tankerkoenig</module>
     <module>org.openhab.binding.tapocontrol</module>
     <module>org.openhab.binding.tasmotaplug</module>
+    <module>org.openhab.binding.tedee</module>
     <module>org.openhab.binding.telegram</module>
     <module>org.openhab.binding.teleinfo</module>
     <module>org.openhab.binding.tellstick</module>
@@ -495,6 +501,7 @@
     <module>org.openhab.binding.visualcrossing</module>
     <module>org.openhab.binding.vitotronic</module>
     <module>org.openhab.binding.vizio</module>
+    <module>org.openhab.binding.volvocars</module>
     <module>org.openhab.binding.volvooncall</module>
     <module>org.openhab.binding.volumio</module>
     <module>org.openhab.binding.warmup</module>
@@ -505,6 +512,7 @@
     <module>org.openhab.binding.wemo</module>
     <module>org.openhab.binding.wifiled</module>
     <module>org.openhab.binding.windcentrale</module>
+    <module>org.openhab.binding.windhager</module>
     <module>org.openhab.binding.wiz</module>
     <module>org.openhab.binding.wlanthermo</module>
     <module>org.openhab.binding.wled</module>
@@ -703,7 +711,7 @@
               <configuration>
                 <skip>${markdownlint.execution.skip}</skip>
                 <workingDirectory>${project.basedir}</workingDirectory>
-                <arguments>exec --yes markdownlint-cli2 -- **/*.md !**/target/** !**/node_modules/** --config ${maven.multiModuleProjectDirectory}/.github/markdownlint.yaml</arguments>
+                <arguments>exec --yes markdownlint-cli2 -- **/*.md !**/target/** !**/node_modules/** --config ${markdownlint.config.path}</arguments>
               </configuration>
             </execution>
           </executions>
@@ -902,6 +910,18 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
             <executions>
+              <execution>
+                <id>configure-markdownlint-path</id>
+                <goals>
+                  <goal>bsh-property</goal>
+                </goals>
+                <phase>validate</phase>
+                <configuration>
+                  <source>// Avoid absolute paths with spaces and platform-dependent argument quoting.
+                    config = session.getRequest().getMultiModuleProjectDirectory().toPath().resolve(".github/markdownlint.yaml");
+                    project.getProperties().setProperty("markdownlint.config.path", project.getBasedir().toPath().relativize(config).toString().replace(java.io.File.separatorChar, '/'));</source>
+                </configuration>
+              </execution>
               <execution>
                 <id>configure-markdownlint</id>
                 <goals>

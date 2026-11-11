@@ -143,13 +143,13 @@ public class MelCloudHomeAtwUnitHandler extends BaseThingHandler implements MelC
         logger.debug("Initializing {} handler.", getThing().getThingTypeUID());
         config = getConfigAs(MelCloudHomeUnitConfig.class);
         if (config.unitId.isBlank()) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "unitId is required");
+            updateStatus(ThingStatusDetail.CONFIGURATION_ERROR, "unitId is required");
             return;
         }
 
         Bridge bridge = getBridge();
         if (bridge == null || !(bridge.getHandler() instanceof MelCloudHomeAccountHandler accountHandler)) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Bridge not set");
+            updateStatus(ThingStatusDetail.CONFIGURATION_ERROR, "Bridge not set");
             return;
         }
 
@@ -186,7 +186,7 @@ public class MelCloudHomeAtwUnitHandler extends BaseThingHandler implements MelC
         } else {
             // Stop the telemetry calls this unit would otherwise keep issuing against an unreachable bridge.
             cancelTelemetryPoll();
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
+            updateStatus(ThingStatusDetail.BRIDGE_OFFLINE);
         }
     }
 
@@ -333,7 +333,7 @@ public class MelCloudHomeAtwUnitHandler extends BaseThingHandler implements MelC
     public void onAtwUnitMissing() {
         lastKnownUnit = null;
         sentCommands.clear();
-        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.GONE, "Unit not found in the MELCloud Home account");
+        updateStatus(ThingStatusDetail.GONE, "Unit not found in the MELCloud Home account");
     }
 
     @Override
@@ -736,13 +736,35 @@ public class MelCloudHomeAtwUnitHandler extends BaseThingHandler implements MelC
         Instant from = to.truncatedTo(ChronoUnit.HOURS);
         MelCloudHomeRequestPacer pacer = handler.getRequestPacer();
         CompletableFuture<Optional<Double>> consumedKwh = track(generation,
-                pacer.scheduleAsync(() -> handler.getApiClient().fetchLatestEnergyKwh(accessToken, config.unitId, from,
-                        to, MelCloudHomeApiClient.MEASURE_ATW_INTERVAL_ENERGY_CONSUMED)));
+                pacer.scheduleAsync(
+                        unlessStopped(generation, () -> handler.getApiClient().fetchLatestEnergyKwh(accessToken,
+                                config.unitId, from, to, MelCloudHomeApiClient.MEASURE_ATW_INTERVAL_ENERGY_CONSUMED))));
         CompletableFuture<Optional<Double>> producedKwh = track(generation,
-                pacer.scheduleAsync(() -> handler.getApiClient().fetchLatestEnergyKwh(accessToken, config.unitId, from,
-                        to, MelCloudHomeApiClient.MEASURE_ATW_INTERVAL_ENERGY_PRODUCED)));
+                pacer.scheduleAsync(
+                        unlessStopped(generation, () -> handler.getApiClient().fetchLatestEnergyKwh(accessToken,
+                                config.unitId, from, to, MelCloudHomeApiClient.MEASURE_ATW_INTERVAL_ENERGY_PRODUCED))));
         consumedKwh.thenCombine(producedKwh, EnergyTelemetry::new)
                 .whenComplete((telemetry, error) -> publishTelemetry(generation, telemetry, error));
+    }
+
+    /**
+     * Wraps a paced telemetry call so it is skipped when its poll round was stopped before the paced slot arrived.
+     * This also covers the window between queuing the call and {@link #track(long, CompletableFuture)} registering it,
+     * in which {@link #cancelTelemetryPoll()} cannot cancel it yet.
+     *
+     * @param generation the poll round the call belongs to
+     * @param call the paced call
+     * @return a paced call that fails with a {@link CancellationException} instead of running {@code call} once the
+     *         poll round is stopped
+     */
+    private <T> MelCloudHomeRequestPacer.PacedCall<T> unlessStopped(long generation,
+            MelCloudHomeRequestPacer.PacedCall<T> call) {
+        return () -> {
+            if (generation != telemetryGeneration.get()) {
+                throw new CancellationException("Telemetry poll was stopped");
+            }
+            return call.call();
+        };
     }
 
     /**
