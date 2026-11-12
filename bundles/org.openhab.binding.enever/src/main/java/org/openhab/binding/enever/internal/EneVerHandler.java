@@ -268,7 +268,9 @@ public class EneVerHandler extends BaseThingHandler {
                     .findFirst().orElse(null);
             logger.info("Retrieved gas for today");
 
-            updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice.getPrijs()));
+            if (gasPrice != null) {
+                updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice.getPrijs()));
+            }
         }
     }
 

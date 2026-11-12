@@ -96,7 +96,7 @@ public class EPrices {
         var dt = datetime.withMinute(minutes).withSecond(0).withNano(0);
 
         var price = allPrices.stream().filter(ep -> ep.getDatumTijd().isEqual(dt)).findFirst().orElse(null);
-        //logger.debug("Price for {} is {}", dt, price);
+        // logger.debug("Price for {} is {}", dt, price);
         if (price != null) {
             var avgPrice = averagePrices.get(datetime.toLocalDate());
 
