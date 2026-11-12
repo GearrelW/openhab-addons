@@ -75,8 +75,6 @@ public class EneVerHandler extends BaseThingHandler {
 
     private @Nullable PayloadPriceItem gasPrice = null;
 
-    private boolean debug = true;
-
     protected final AtomicLong lifecycleGeneration = new AtomicLong();
 
     public EneVerHandler(Thing thing) {
@@ -208,7 +206,6 @@ public class EneVerHandler extends BaseThingHandler {
         } else {
             updateStatus(ThingStatus.UNKNOWN);
             token = config.token;
-            debug = config.debug;
             treshold = (double) config.priceTreshold / 100;
             minMaxTreshold = (double) config.minMaxTreshold / 100;
             return true;

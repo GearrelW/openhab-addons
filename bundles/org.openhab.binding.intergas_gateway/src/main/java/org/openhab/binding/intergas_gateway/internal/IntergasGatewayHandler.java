@@ -15,7 +15,6 @@ package org.openhab.binding.intergas_gateway.internal;
 import static org.openhab.binding.intergas_gateway.internal.IntergasGatewayBindingConstants.CHANNEL_SET_POINT;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
@@ -66,7 +65,6 @@ public class IntergasGatewayHandler extends BaseThingHandler {
     protected ScheduledExecutorService executorService = this.scheduler;
     private @Nullable ScheduledFuture<?> dataPollingJob;
 
-    private boolean heaterOn = false;
 
     private double lastSetpoint = 0.0;
     private int dailyTotalPower = 0;
@@ -148,14 +146,20 @@ public class IntergasGatewayHandler extends BaseThingHandler {
      */
     private boolean configure() {
         if (config.intergasGateway.trim().isEmpty() || config.xtendGateway.trim().isEmpty()) {
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Missing ipAddress/host configuration");
             updateStatus(ThingStatus.OFFLINE);
             return false;
         } else {
             updateStatus(ThingStatus.UNKNOWN);
-            gatewayURL = String.format("http://admin:lo9988qo@%s/protect/data.json?heater=0",
+            var gUrl = String.format("http://admin:lo9988qo@%s/protect/data.json?heater=0",
                     config.intergasGateway.trim());
-            xtendURL = String.format("http://%s:72/xtend/xtend", config.xtendGateway.trim());
+            if (gUrl != null) {
+                gatewayURL = gUrl;
+            }
+
+            var xUrl = String.format("http://%s:72/xtend/xtend", config.xtendGateway.trim());
+            if (xUrl != null) {
+                xtendURL = xUrl;
+            }
             return true;
         }
     }
@@ -166,7 +170,6 @@ public class IntergasGatewayHandler extends BaseThingHandler {
      * @return true if data was retrieved and published for the current generation
      */
     protected boolean retrieveData(long generation) {
-        var now = ZonedDateTime.now();
         if (generation != lifecycleGeneration.get()) {
             logger.debug("Generation mismatch, aborting data retrieval");
             return false;
@@ -209,16 +212,16 @@ public class IntergasGatewayHandler extends BaseThingHandler {
      * @return the content of the response from the given url
      * @throws IOException
      */
-    public String getContentFrom(String url) throws IOException {
+    public @Nullable String getContentFrom(String url) throws IOException {
         logger.debug("Retrieving data from {}", url);
         return HttpUtil.executeUrl("GET", url, 30000);
     }
 
-    public String getXtendData() throws IOException {
+    public @Nullable String getXtendData() throws IOException {
         return getContentFrom(xtendURL);
     }
 
-    protected void handleXtendData(String data) throws JsonSyntaxException, CommunicationException {
+    protected void handleXtendData(@Nullable String data) throws JsonSyntaxException, CommunicationException {
         XtendPayload payload = gson.fromJson(data, XtendPayload.class);
         if (payload != null) {
             if (payload.getRoomTemperature() > 0) {
@@ -248,11 +251,11 @@ public class IntergasGatewayHandler extends BaseThingHandler {
         }
     }
 
-    private String getIntergasData() throws IOException {
+    private @Nullable String getIntergasData() throws IOException {
         return getContentFrom(gatewayURL);
     }
 
-    protected void handleIntergasData(String data) throws JsonSyntaxException, CommunicationException {
+    protected void handleIntergasData(@Nullable String data) throws JsonSyntaxException, CommunicationException {
         GatewayPayload gsPayload = gson.fromJson(data, GatewayPayload.class);
         if (gsPayload != null) {
             updateState(IntergasGatewayBindingConstants.CHANNEL_ROOM_TEMPERATURE,
