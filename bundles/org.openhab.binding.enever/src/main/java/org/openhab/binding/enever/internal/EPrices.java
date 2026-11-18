@@ -19,9 +19,11 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@NonNullByDefault
 public class EPrices {
 
     public static final String SOLAR_CONTROL = "solar";
@@ -69,15 +71,23 @@ public class EPrices {
     }
 
     public EPrice getMaxPriceFor(LocalDate date) {
-        return maxPrices.get(date);
+        var mp = maxPrices.get(date);
+        if (mp == null) {
+            mp = new EPrice();
+        }
+        return mp;
     }
 
-    public Double getAveragePriceFor(LocalDate date) {
-        return averagePrices.get(date);
+    public EPrice getAveragePriceFor(LocalDate date) {
+        var ap = averagePrices.get(date);
+        if (ap == null) {
+            return new EPrice();
+        }
+        return new EPrice(date, ap);
     }
 
     public boolean hasPriceFor(ZonedDateTime datetime) {
-        return getPriceFor(datetime) != null;
+        return getPriceFor(datetime).isValid();
     }
 
     public EPrice getPriceFor(ZonedDateTime datetime) {
@@ -108,6 +118,8 @@ public class EPrices {
                     price.isDuur = true;
                 }
             }
+        } else {
+            price = new EPrice();
         }
 
         return price;

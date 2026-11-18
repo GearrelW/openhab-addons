@@ -14,12 +14,15 @@ package org.openhab.binding.enever.internal.payloads;
 
 import java.util.List;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 /**
  * Class that provides storage for the json objects obtained from EneVer.
  *
  * @author Gearrel Welvaart - Initial contribution
  *
  */
+@NonNullByDefault
 public interface IPayload {
 
     public boolean getStatus();

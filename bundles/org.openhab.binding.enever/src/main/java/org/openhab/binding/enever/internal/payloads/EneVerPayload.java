@@ -15,6 +15,8 @@ package org.openhab.binding.enever.internal.payloads;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -23,6 +25,7 @@ import com.google.gson.annotations.SerializedName;
  * @author Gearrel Welvaart - Initial contribution
  *
  */
+@NonNullByDefault
 public class EneVerPayload implements IPayload {
     @SerializedName("status")
     private boolean status = true;

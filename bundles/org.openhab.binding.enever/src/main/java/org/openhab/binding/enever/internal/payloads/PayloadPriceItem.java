@@ -16,6 +16,8 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -24,7 +26,7 @@ import com.google.gson.annotations.SerializedName;
  * @author Gearrel Welvaart - Initial contribution
  *
  */
-
+@NonNullByDefault
 public class PayloadPriceItem {
 
     @SerializedName(value = "datum", alternate = "dateTime")

@@ -13,20 +13,34 @@
 package org.openhab.binding.enever.internal;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+
+@NonNullByDefault
 public class EPrice implements Comparable<EPrice> {
 
-    private ZonedDateTime datum = ZonedDateTime.now();
+    private ZonedDateTime datum = ZonedDateTime.ofLocal(LocalDateTime.MIN, ZoneId.systemDefault(), null);
 
     private Double prijs = 0.0;
 
     public Boolean isDuur = false;
     public Boolean isGoedkoop = false;
 
+    public EPrice() {
+    }
+
     public EPrice(ZonedDateTime datum, Double prijs) {
         this.datum = datum;
         this.prijs = prijs;
+    }
+
+    public EPrice(LocalDate datum, Double prijs) {
+        this(ZonedDateTime.of(datum, LocalTime.MIDNIGHT, ZoneId.systemDefault()), prijs);
     }
 
     public Double getPrijs() {
@@ -49,8 +63,15 @@ public class EPrice implements Comparable<EPrice> {
         return datum.getMinute();
     }
 
+    public boolean isValid() {
+        return datum.toLocalDate().isAfter(LocalDate.MIN);
+    }
+
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
+        if (o == null || !(o instanceof EPrice)) {
+            return false;
+        }
         return datum.equals(((EPrice) o).datum);
     }
 
