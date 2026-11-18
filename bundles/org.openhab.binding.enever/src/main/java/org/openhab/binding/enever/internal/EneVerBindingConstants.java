@@ -30,12 +30,12 @@ public class EneVerBindingConstants {
     public static final ThingTypeUID THING_TYPE_ENEVER = new ThingTypeUID(BINDING_ID, "enever");
 
     // List of all Channel ids
-    public static final String CHANNEL_ELECTRICITY_HOURLY_PRICE = "electricity-price";
-    public static final String CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1 = "electricity-price-plus-1";
-    public static final String CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2 = "electricity-price-plus-2";
+    public static final String CHANNEL_ELECTRICITY_PRICE = "electricity-price";
+    public static final String CHANNEL_ELECTRICITY_PRICE_PLUS_1 = "electricity-price-plus-1";
+    public static final String CHANNEL_ELECTRICITY_PRICE_PLUS_2 = "electricity-price-plus-2";
     public static final String CHANNEL_AVG_ELECTRICITY_PRICE = "average-electricity-price";
     public static final String CHANNEL_GAS_DAILY_PRICE = "gas-price";
-    public static final String CHANNEL_HOUR_INDICATION = "indication-hour";
+    public static final String CHANNEL_PRICE_INDICATION = "indication-hour";
     public static final String CHANNEL_PRICE_WARNING = "warning-hour";
     public static final String CHANNEL_PEAK_HOUR = "peak-hour";
 }

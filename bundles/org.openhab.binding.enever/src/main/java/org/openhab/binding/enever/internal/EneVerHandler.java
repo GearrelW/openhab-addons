@@ -74,6 +74,7 @@ public class EneVerHandler extends BaseThingHandler {
     private EPrices ePrices = new EPrices(minMaxTreshold, treshold);
 
     private @Nullable PayloadPriceItem gasPrice = null;
+    private @Nullable Double avergeElectricityPrice = null;
 
     protected final AtomicLong lifecycleGeneration = new AtomicLong();
 
@@ -274,27 +275,37 @@ public class EneVerHandler extends BaseThingHandler {
     private void updateElectricityChannels() {
         var now = ZonedDateTime.now();
         var prijs = ePrices.getPriceFor(now);
+        if (now.getHour() == 0 && now.getMinute() < 30) {
+            avergeElectricityPrice = null;
+        }
+
         if (prijs != null) {
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE, new DecimalType(prijs.getPrijs()));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_PRICE, new DecimalType(prijs.getPrijs()));
 
             if (prijs.isGoedkoop) {
-                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("cheap"));
+                updateState(EneVerBindingConstants.CHANNEL_PRICE_INDICATION, new StringType("cheap"));
             } else if (prijs.isDuur) {
-                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("expensive"));
+                updateState(EneVerBindingConstants.CHANNEL_PRICE_INDICATION, new StringType("expensive"));
             } else {
-                updateState(EneVerBindingConstants.CHANNEL_HOUR_INDICATION, new StringType("neutral"));
+                updateState(EneVerBindingConstants.CHANNEL_PRICE_INDICATION, new StringType("neutral"));
             }
         }
         prijs = ePrices.getPriceFor(now.plusMinutes(15));
         if (prijs != null) {
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_1,
-                    new DecimalType(prijs.getPrijs()));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_PRICE_PLUS_1, new DecimalType(prijs.getPrijs()));
         }
 
         prijs = ePrices.getPriceFor(now.plusMinutes(30));
         if (prijs != null) {
-            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_HOURLY_PRICE_PLUS_2,
-                    new DecimalType(prijs.getPrijs()));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_PRICE_PLUS_2, new DecimalType(prijs.getPrijs()));
+        }
+
+        if (avergeElectricityPrice == null) {
+            var avg = ePrices.getAveragePriceFor(now.toLocalDate());
+            if (avg != null) {
+                updateState(EneVerBindingConstants.CHANNEL_AVG_ELECTRICITY_PRICE, new DecimalType(avg));
+                avergeElectricityPrice = avg;
+            }
         }
     }
 
