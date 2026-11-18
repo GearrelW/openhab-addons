@@ -28,7 +28,6 @@ import javax.naming.CommunicationException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.enever.internal.payloads.EneVerPayload;
-import org.openhab.binding.enever.internal.payloads.IPayload;
 import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.library.types.DecimalType;
@@ -273,7 +272,7 @@ public class EneVerHandler extends BaseThingHandler {
 
     protected void handleElectricityData(String data, boolean forToday)
             throws JsonSyntaxException, CommunicationException {
-        IPayload payload = gson.fromJson(data, EneVerPayload.class);
+        EneVerPayload payload = gson.fromJson(data, EneVerPayload.class);
 
         if (forToday && (payload == null || !payload.getStatus())) {
             throw new CommunicationException("Unable to parse data response from API");
@@ -297,7 +296,7 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     protected void handleGasData(String data) throws JsonSyntaxException, CommunicationException {
-        IPayload payload = gson.fromJson(data, EneVerPayload.class);
+        EneVerPayload payload = gson.fromJson(data, EneVerPayload.class);
 
         if (payload != null && payload.getStatus()) {
             gasPrice = payload.getGasPrices().stream().filter(price -> price.getDatum().isEqual(LocalDate.now()))

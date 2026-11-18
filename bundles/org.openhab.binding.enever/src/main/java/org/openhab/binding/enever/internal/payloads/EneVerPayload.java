@@ -26,19 +26,17 @@ import com.google.gson.annotations.SerializedName;
  *
  */
 @NonNullByDefault
-public class EneVerPayload implements IPayload {
+public class EneVerPayload {
     @SerializedName("status")
     private boolean status = true;
 
     @SerializedName("data")
     private List<PayloadPriceItem> prices = new ArrayList<PayloadPriceItem>();
 
-    @Override
     public boolean getStatus() {
         return status;
     }
 
-    @Override
     public List<PayloadPriceItem> getElectricityPrices() {
         if (prices.size() > 1) {
             return prices;
@@ -46,7 +44,6 @@ public class EneVerPayload implements IPayload {
         return new ArrayList<PayloadPriceItem>();
     }
 
-    @Override
     public List<PayloadPriceItem> getGasPrices() {
         if (prices.size() == 1) {
             return prices;
