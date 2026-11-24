@@ -45,7 +45,6 @@ public class EPrices {
         prices.entrySet().forEach(entry -> {
             allPrices.add(new EPrice(entry.getKey(), entry.getValue()));
         });
-        allPrices.removeIf(ep -> ep.getDatumTijd().isBefore(ZonedDateTime.now().minusHours(1)));
         allPrices.stream().sorted();
 
         allPrices.stream()
@@ -60,6 +59,7 @@ public class EPrices {
                 Collectors.maxBy((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())))).forEach((date, max) -> {
                     maxPrices.put(date, max.get());
                 });
+        allPrices.removeIf(ep -> ep.getDatumTijd().isBefore(ZonedDateTime.now().minusHours(1)));
     }
 
     public TreeSet<EPrice> getAllPrices() {

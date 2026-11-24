@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @author Gearrel Welvaart - Initial contribution
  */
 @Component(scope = ServiceScope.PROTOTYPE, service = EneVerActions.class)
-@ThingActionsScope(name = "intergas_gateway")
+@ThingActionsScope(name = "enever")
 @NonNullByDefault
 public class EneVerActions implements ThingActions {
     private final Logger logger = LoggerFactory.getLogger(EneVerActions.class);
