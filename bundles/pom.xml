@@ -95,9 +95,11 @@
     <module>org.openhab.binding.bluetooth.grundfosalpha</module>
     <module>org.openhab.binding.bluetooth.hdpowerview</module>
     <module>org.openhab.binding.bluetooth.listener</module>
+    <module>org.openhab.binding.bluetooth.miflora</module>
     <module>org.openhab.binding.bluetooth.radoneye</module>
     <module>org.openhab.binding.bluetooth.roaming</module>
     <module>org.openhab.binding.bluetooth.ruuvitag</module>
+    <module>org.openhab.binding.bmwcardata</module>
     <module>org.openhab.binding.bondhome</module>
     <module>org.openhab.binding.boschindego</module>
     <module>org.openhab.binding.boschshc</module>
@@ -126,6 +128,7 @@
     <module>org.openhab.binding.deconz</module>
     <module>org.openhab.binding.denonmarantz</module>
     <module>org.openhab.binding.deutschebahn</module>
+    <module>org.openhab.binding.dreame</module>
     <module>org.openhab.binding.digiplex</module>
     <module>org.openhab.binding.digitalstrom</module>
     <module>org.openhab.binding.dirigera</module>
@@ -302,6 +305,7 @@
     <module>org.openhab.binding.modbus.ankersolix</module>
     <module>org.openhab.binding.modbus.e3dc</module>
     <module>org.openhab.binding.modbus.foxinverter</module>
+    <module>org.openhab.binding.modbus.hager</module>
     <module>org.openhab.binding.modbus.kermi</module>
     <module>org.openhab.binding.modbus.lambda</module>
     <module>org.openhab.binding.modbus.sbc</module>
@@ -492,6 +496,7 @@
     <module>org.openhab.binding.vektiva</module>
     <module>org.openhab.binding.velbus</module>
     <module>org.openhab.binding.velux</module>
+    <module>org.openhab.binding.veluxactive</module>
     <module>org.openhab.binding.venstarthermostat</module>
     <module>org.openhab.binding.ventaair</module>
     <module>org.openhab.binding.verisure</module>
@@ -502,7 +507,6 @@
     <module>org.openhab.binding.vitotronic</module>
     <module>org.openhab.binding.vizio</module>
     <module>org.openhab.binding.volvocars</module>
-    <module>org.openhab.binding.volvooncall</module>
     <module>org.openhab.binding.volumio</module>
     <module>org.openhab.binding.warmup</module>
     <module>org.openhab.binding.weathercompany</module>
@@ -544,6 +548,7 @@
     <module>org.openhab.voice.googletts</module>
     <module>org.openhab.voice.mactts</module>
     <module>org.openhab.voice.marytts</module>
+    <module>org.openhab.voice.microwakewordks</module>
     <module>org.openhab.voice.mimictts</module>
     <module>org.openhab.voice.openaitts</module>
     <module>org.openhab.voice.picotts</module>
@@ -829,7 +834,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>xml-maven-plugin</artifactId>
-        <version>1.2.2</version>
+        <version>1.4.0</version>
         <configuration>
           <validationSets>
             <validationSet>
