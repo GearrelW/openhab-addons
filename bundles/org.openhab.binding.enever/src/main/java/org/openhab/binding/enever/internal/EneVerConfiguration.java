@@ -27,6 +27,8 @@ public class EneVerConfiguration {
      */
     public String token = "";
 
+    public String provider = "";
+
     public int priceTreshold = 0;
 
     public int minMaxTreshold = 0;

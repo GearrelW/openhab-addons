@@ -15,11 +15,13 @@ package org.openhab.binding.enever.internal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.openhab.binding.enever.internal.payloads.EneVerPrice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,39 +32,38 @@ public class EPrices {
     public static final String PRICES_CONTROL = "prices";
 
     private Map<LocalDate, Double> averagePrices = new Hashtable<>();
-    private Map<LocalDate, EPrice> maxPrices = new Hashtable<>();
+    private Map<LocalDate, EneVerPrice> maxPrices = new Hashtable<>();
 
     private final Logger logger = LoggerFactory.getLogger(EPrices.class);
 
-    private TreeSet<EPrice> allPrices = new TreeSet<EPrice>();
+    private TreeSet<EneVerPrice> allPrices = new TreeSet<EneVerPrice>();
     private Double treshold = 0.15;
 
     public EPrices(Double minMaxTreshold, Double priceTreshold) {
         this.treshold = priceTreshold;
     }
 
-    public void addPrices(Map<ZonedDateTime, Double> prices) {
-        prices.entrySet().forEach(entry -> {
-            allPrices.add(new EPrice(entry.getKey(), entry.getValue()));
-        });
+    public void addPrices(List<EneVerPrice> prices) {
+        allPrices.addAll(prices);
         allPrices.stream().sorted();
 
         allPrices.stream()
-                .collect(Collectors.groupingBy(EPrice::getDatum, Collectors.averagingDouble(EPrice::getPrijs)))
+                .collect(
+                        Collectors.groupingBy(EneVerPrice::getDatum, Collectors.averagingDouble(EneVerPrice::getPrijs)))
                 .forEach((date, avg) -> {
                     if (!averagePrices.containsKey(date)) {
                         averagePrices.put(date, avg);
                     }
                 });
 
-        allPrices.stream().collect(Collectors.groupingBy(EPrice::getDatum,
+        allPrices.stream().collect(Collectors.groupingBy(EneVerPrice::getDatum,
                 Collectors.maxBy((p1, p2) -> p1.getPrijs().compareTo(p2.getPrijs())))).forEach((date, max) -> {
                     maxPrices.put(date, max.get());
                 });
         allPrices.removeIf(ep -> ep.getDatumTijd().isBefore(ZonedDateTime.now().minusHours(1)));
     }
 
-    public TreeSet<EPrice> getAllPrices() {
+    public TreeSet<EneVerPrice> getAllPrices() {
         return allPrices;
     }
 
@@ -70,27 +71,27 @@ public class EPrices {
         return allPrices.stream().anyMatch(ep -> ep.getDatum().equals(date));
     }
 
-    public EPrice getMaxPriceFor(LocalDate date) {
+    public EneVerPrice getMaxPriceFor(LocalDate date) {
         var mp = maxPrices.get(date);
         if (mp == null) {
-            mp = new EPrice();
+            mp = new EneVerPrice();
         }
         return mp;
     }
 
-    public EPrice getAveragePriceFor(LocalDate date) {
+    public EneVerPrice getAveragePriceFor(LocalDate date) {
         var ap = averagePrices.get(date);
         if (ap == null) {
-            return new EPrice();
+            return new EneVerPrice();
         }
-        return new EPrice(date, ap);
+        return new EneVerPrice(date, ap);
     }
 
     public boolean hasPriceFor(ZonedDateTime datetime) {
         return getPriceFor(datetime).isValid();
     }
 
-    public EPrice getPriceFor(ZonedDateTime datetime) {
+    public EneVerPrice getPriceFor(ZonedDateTime datetime) {
         // logger.debug("Getting price for {}", datetime);
         // logger.debug("All prices: {}", allPrices);
         // logger.debug("Average prices: {}", averagePrices);
@@ -119,7 +120,7 @@ public class EPrices {
                 }
             }
         } else {
-            price = new EPrice();
+            price = new EneVerPrice();
         }
 
         return price;

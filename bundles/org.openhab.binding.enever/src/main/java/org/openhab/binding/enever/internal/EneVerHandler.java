@@ -14,21 +14,19 @@ package org.openhab.binding.enever.internal;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import javax.naming.CommunicationException;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.enever.internal.payloads.EneVerPayload;
-import org.openhab.binding.enever.internal.payloads.PayloadPriceItem;
+import org.openhab.binding.enever.internal.payloads.EneVerPrice;
 import org.openhab.core.io.net.http.HttpUtil;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.StringType;
@@ -66,14 +64,15 @@ public class EneVerHandler extends BaseThingHandler {
     private @Nullable ScheduledFuture<?> gasPriceResetJob;
 
     private String token = "";
+    private String provider = "";
 
     private double treshold = 0;
     private double minMaxTreshold = 0;
 
     private EPrices ePrices = new EPrices(minMaxTreshold, treshold);
 
-    private @Nullable PayloadPriceItem gasPrice = null;
-    private @Nullable EPrice averageElectricityPrice = null;
+    private @Nullable EneVerPrice gasPrice = null;
+    private @Nullable EneVerPrice averageElectricityPrice = null;
 
     protected final AtomicLong lifecycleGeneration = new AtomicLong();
 
@@ -199,13 +198,17 @@ public class EneVerHandler extends BaseThingHandler {
      */
     @SuppressWarnings("null")
     private boolean configure() {
-        if (config == null || config.token.trim().isEmpty()) {
+        var providers = new String[] { "AN", "BE", "CB", "EE", "NE", "ED", "EG", "ES", "EV", "EZ", "FR", "GS", "HE",
+                "IN", "MD", "PE", "QU", "SS", "TI", "VD", "VO", "VF", "WE", "ZP" };
+        if (config == null || config.token.trim().isEmpty() || config.provider.trim().isEmpty()
+                || !java.util.Arrays.asList(providers).contains(config.provider)) {
             logger.error("No token configured for thing {}", getThing().getUID());
             updateStatus(ThingStatus.OFFLINE);
             return false;
         } else {
             updateStatus(ThingStatus.UNKNOWN);
             token = config.token;
+            provider = config.provider;
             treshold = (double) config.priceTreshold / 100;
             minMaxTreshold = (double) config.minMaxTreshold / 100;
             return true;
@@ -222,6 +225,8 @@ public class EneVerHandler extends BaseThingHandler {
 
         if (prijs.isValid()) {
             updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_PRICE, new DecimalType(prijs.getPrijs()));
+            updateState(EneVerBindingConstants.CHANNEL_ELECTRICITY_MARKET_PRICE,
+                    new DecimalType(prijs.getMarktPrijs()));
 
             if (prijs.isGoedkoop) {
                 updateState(EneVerBindingConstants.CHANNEL_PRICE_INDICATION, new StringType("cheap"));
@@ -263,10 +268,9 @@ public class EneVerHandler extends BaseThingHandler {
     }
 
     public String getElectricityData(boolean forToday) throws IOException {
-        String url = "https://enever.nl/apiv3/stroomprijs_vandaag.php?resolution=15&price=prijsZP&token=" + token;
-        if (!forToday) {
-            url = "https://enever.nl/apiv3/stroomprijs_morgen.php?resolution=15&price=prijsZP&token=" + token;
-        }
+        var dag = forToday ? "vandaag" : "morgen";
+        String url = "https://enever.nl/apiv3/stroomprijs_" + dag + ".php?resolution=15&price=prijs,prijs" + provider
+                + "&token=" + token;
         return getContentFrom(url);
     }
 
@@ -279,9 +283,7 @@ public class EneVerHandler extends BaseThingHandler {
         }
 
         if (payload != null && payload.getStatus()) {
-            var prices = payload.getElectricityPrices().stream()
-                    .collect(Collectors.toMap(PayloadPriceItem::getDatumTijd, PayloadPriceItem::getPrijs));
-            ePrices.addPrices(prices);
+            ePrices.addPrices(payload.getElectricityPrices());
             if (forToday) {
                 logger.info("Retrieved electricity for today");
             } else {
@@ -299,11 +301,10 @@ public class EneVerHandler extends BaseThingHandler {
         EneVerPayload payload = gson.fromJson(data, EneVerPayload.class);
 
         if (payload != null && payload.getStatus()) {
-            gasPrice = payload.getGasPrices().stream().filter(price -> price.getDatum().isEqual(LocalDate.now()))
-                    .findFirst().orElse(null);
+            gasPrice = payload.getGasPrice();
             logger.info("Retrieved gas for today");
 
-            if (gasPrice != null) {
+            if (gasPrice.isValid()) {
                 updateState(EneVerBindingConstants.CHANNEL_GAS_DAILY_PRICE, new DecimalType(gasPrice.getPrijs()));
             }
         }

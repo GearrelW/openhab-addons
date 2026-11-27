@@ -31,23 +31,23 @@ public class EneVerPayload {
     private boolean status = true;
 
     @SerializedName("data")
-    private List<PayloadPriceItem> prices = new ArrayList<PayloadPriceItem>();
+    private List<EneVerPrice> prices = new ArrayList<EneVerPrice>();
 
     public boolean getStatus() {
         return status;
     }
 
-    public List<PayloadPriceItem> getElectricityPrices() {
+    public List<EneVerPrice> getElectricityPrices() {
         if (prices.size() > 1) {
             return prices;
         }
-        return new ArrayList<PayloadPriceItem>();
+        return new ArrayList<EneVerPrice>();
     }
 
-    public List<PayloadPriceItem> getGasPrices() {
+    public EneVerPrice getGasPrice() {
         if (prices.size() == 1) {
-            return prices;
+            return prices.get(0);
         }
-        return new ArrayList<PayloadPriceItem>();
+        return new EneVerPrice();
     }
 }

@@ -31,6 +31,7 @@ public class EneVerBindingConstants {
 
     // List of all Channel ids
     public static final String CHANNEL_ELECTRICITY_PRICE = "electricity-price";
+    public static final String CHANNEL_ELECTRICITY_MARKET_PRICE = "electricity-market-price";
     public static final String CHANNEL_ELECTRICITY_PRICE_PLUS_1 = "electricity-price-plus-1";
     public static final String CHANNEL_ELECTRICITY_PRICE_PLUS_2 = "electricity-price-plus-2";
     public static final String CHANNEL_AVG_ELECTRICITY_PRICE = "average-electricity-price";

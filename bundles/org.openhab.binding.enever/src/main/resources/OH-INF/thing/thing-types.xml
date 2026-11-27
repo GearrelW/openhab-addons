@@ -12,8 +12,12 @@
 
 		<channels>
 			<channel id="electricity-price" typeId="channel-price">
-				<label>Hourly Electricity Price</label>
-				<description>This channel provides the hourly electricity price</description>
+				<label>Electricity Price</label>
+				<description>This channel provides the electricity price</description>
+			</channel>
+			<channel id="electricity-market-price" typeId="channel-price">
+				<label>Electricity Market Price</label>
+				<description>This channel provides the electricity market price</description>
 			</channel>
 			<channel id="electricity-price-plus-1" typeId="channel-price">
 				<label>Hourly Electricity Price + 1</label>
@@ -41,13 +45,17 @@
 			</channel>
 		</channels>
 		<properties>
-			<property name="thingTypeVersion">3</property>
+			<property name="thingTypeVersion">4</property>
 		</properties>
 
 		<config-description>
 			<parameter name="token" type="text" required="true">
 				<label>Token</label>
 				<description>Token</description>
+			</parameter>
+			<parameter name="provider" type="text" required="true">
+				<label>Provider</label>
+				<description>Provider</description>
 			</parameter>
 			<parameter name="priceTreshold" type="integer" required="false">
 				<label>Treshold (%) for cheap/expensive hours</label>
